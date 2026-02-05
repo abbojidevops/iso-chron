@@ -5,6 +5,7 @@ import { INGREDIENTS, checkConflicts, type Conflict } from "@/lib/ingredients";
 import { cn } from "@/lib/utils";
 import { AlertTriangle, X, FlaskConical, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 export default function Dashboard() {
     const [selectedIngredients, setSelectedIngredients] = useState<string[]>([]);
@@ -19,6 +20,49 @@ export default function Dashboard() {
         }
         setSelectedIngredients(next);
         setConflicts(checkConflicts(next));
+    };
+
+    const [saving, setSaving] = useState(false);
+    // Initialize Supabase client
+    // Note: We need to import this dynamically or ensure the package is installed. 
+    // For now, let's assume the user has the keys and might not have run the SQL yet, 
+    // so we wrap this in a try-catch to avoid crashing if the table doesn't exist.
+
+    // We'll use a dynamic import for the client to be safe during build if deps are weird
+    // but standard usage is: import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+
+    const handleSave = async () => {
+        setSaving(true);
+        try {
+            const supabase = createClientComponentClient();
+
+            // Check if user is logged in
+            const { data: { session } } = await supabase.auth.getSession();
+
+            if (!session) {
+                alert("Please Sign In (top right) to save your routines.");
+                setSaving(false);
+                return;
+            }
+
+            const { error } = await supabase.from('user_products').insert({
+                user_id: session.user.id,
+                product_name: "My Custom Routine",
+                ingredient_ids: selectedIngredients
+            });
+
+            if (error) {
+                throw error;
+            }
+
+            alert("Routine saved successfully to your Skin Dossier!");
+
+        } catch (e) {
+            console.error(e);
+            alert("Error saving routine: " + (e as Error).message);
+        } finally {
+            setSaving(false);
+        }
     };
 
     return (
@@ -135,8 +179,12 @@ export default function Dashboard() {
                             <span>Total</span>
                             <span className="text-green-400">FREE</span>
                         </div>
-                        <button className="w-full mt-4 py-3 bg-white text-black font-bold rounded-xl hover:bg-neutral-200 transition-colors">
-                            Save Routine to Profile
+                        <button
+                            onClick={handleSave}
+                            disabled={saving}
+                            className="w-full mt-4 py-3 bg-white text-black font-bold rounded-xl hover:bg-neutral-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {saving ? "Saving..." : "Save Routine to Profile"}
                         </button>
                     </div>
                 </div>
