@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { INGREDIENTS, checkConflicts, type Conflict } from "@/lib/ingredients";
 import { cn } from "@/lib/utils";
