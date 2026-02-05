@@ -52,7 +52,12 @@ Open [http://localhost:3000](http://localhost:3000) to see the application.
 2. **Deploy on Vercel**:
    - Go to [Vercel Dashboard](https://vercel.com/new).
    - Import your `iso-chron` repository.
-   - **Important**: Add your Environment Variables (Clerk, Supabase) in the Vercel Project Settings.
+   - **CRITICAL**: Expand the **"Environment Variables"** section.
+   - Add the following keys (copy from your `.env.local`):
+     - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
+     - `CLERK_SECRET_KEY`
+     - `NEXT_PUBLIC_SUPABASE_URL`
+     - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - Click **Deploy**.
 
 ## 🧬 Features
