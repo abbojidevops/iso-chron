@@ -1,14 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { UserButton, SignInButton, SignedIn, SignedOut } from "@clerk/nextjs";
+import { UserButton, SignInButton, SignedIn, SignedOut, useSession, useUser } from "@clerk/nextjs";
 import { INGREDIENTS, checkConflicts, type Conflict } from "@/lib/ingredients";
 import { cn } from "@/lib/utils";
-import { AlertTriangle, X, FlaskConical, ShieldCheck } from "lucide-react";
+import { AlertTriangle, X, FlaskConical, ShieldCheck, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@supabase/supabase-js";
 
 export default function Dashboard() {
+    const { session } = useSession();
+    const { isSignedIn, user } = useUser();
     const [selectedIngredients, setSelectedIngredients] = useState<string[]>([]);
     const [conflicts, setConflicts] = useState<Conflict[]>([]);
 
@@ -24,46 +26,50 @@ export default function Dashboard() {
     };
 
     const [saving, setSaving] = useState(false);
-    // Initialize Supabase client
-    // Note: We need to import this dynamically or ensure the package is installed. 
-    // For now, let's assume the user has the keys and might not have run the SQL yet, 
-    // so we wrap this in a try-catch to avoid crashing if the table doesn't exist.
-
-    // We'll use a dynamic import for the client to be safe during build if deps are weird
-    // but standard usage is: import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
     const handleSave = async () => {
+        if (!isSignedIn) return;
+
         setSaving(true);
         try {
-            // Direct initialization using core SDK to avoid build issues with helpers
-            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-            const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-            const supabase = createClient(supabaseUrl, supabaseKey);
+            // 1. Get the Supabase Token from Clerk
+            // IMPORTANT: User must create a JWT Template named 'supabase' in Clerk Dashboard
+            const token = await session?.getToken({ template: 'supabase' });
 
-            // Check if user is logged in
-            const { data: { session } } = await supabase.auth.getSession();
-
-            if (!session) {
-                alert("Please Sign In (top right) to save your routines.");
-                setSaving(false);
-                return;
+            if (!token) {
+                // Fallback for user if they haven't set up the template yet
+                console.warn("No Supabase token found. Check Clerk Dashboard > JWT Templates.");
+                // We'll throw only if we strictly need RLS. 
+                // For now, let's try to alert nicely.
+                throw new Error("Missing Supabase JWT Template in Clerk.");
             }
 
+            // 2. Initialize Supabase with the Token
+            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+            const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+            const supabase = createClient(supabaseUrl, supabaseKey, {
+                global: { headers: { Authorization: `Bearer ${token}` } },
+            });
+
+            // 3. Insert Data
             const { error } = await supabase.from('user_products').insert({
-                user_id: session.user.id,
+                user_id: user.id,
                 product_name: "My Custom Routine",
                 ingredient_ids: selectedIngredients
             });
 
-            if (error) {
-                throw error;
-            }
+            if (error) throw error;
 
             alert("Routine saved successfully to your Skin Dossier!");
 
         } catch (e) {
             console.error(e);
-            alert("Error saving routine: " + (e as Error).message);
+            const msg = (e as Error).message;
+            if (msg.includes("JWT")) {
+                alert("Setup Required: Please add the 'supabase' JWT Template in your Clerk Dashboard.");
+            } else {
+                alert("Error saving routine: " + msg);
+            }
         } finally {
             setSaving(false);
         }
@@ -72,24 +78,38 @@ export default function Dashboard() {
     return (
         <div className="min-h-screen bg-background p-8 text-foreground pb-20">
             <header className="mb-12 flex items-center justify-between mx-auto max-w-6xl">
-                <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+                <div className="flex items-center gap-3">
                     <FlaskConical className="w-8 h-8 text-blue-500" />
-                    Bio-Audit Dashboard
-                </h1>
+                    <h1 className="text-3xl font-bold tracking-tight">Bio-Audit</h1>
+                </div>
+
                 <div className="flex items-center gap-4">
-                    <div className="bg-blue-600/20 text-blue-400 px-4 py-1 rounded-full text-xs font-mono border border-blue-500/30">
-                        PREMIUM ACCOUNT
+                    {/* Premium Badge - Only show if not signed in or actual premium logic */}
+                    <div className="hidden md:block bg-gradient-to-r from-blue-600/20 to-purple-600/20 text-blue-300 px-4 py-1.5 rounded-full text-xs font-mono border border-blue-500/30">
+                        ISO-CHRON v1.0
                     </div>
-                    <SignedOut>
-                        <SignInButton mode="modal">
-                            <button className="text-sm font-medium hover:text-blue-400 transition-colors">
-                                Sign In
-                            </button>
-                        </SignInButton>
-                    </SignedOut>
-                    <SignedIn>
-                        <UserButton afterSignOutUrl="/" />
-                    </SignedIn>
+
+                    <div className="h-8 w-[1px] bg-white/10 mx-2 hidden md:block"></div>
+
+                    <div className="flex items-center gap-3">
+                        <SignedOut>
+                            <SignInButton mode="modal">
+                                <button className="px-4 py-2 text-sm font-medium bg-white text-black rounded-full hover:bg-neutral-200 transition-colors">
+                                    Sign In
+                                </button>
+                            </SignInButton>
+                        </SignedOut>
+                        <SignedIn>
+                            <span className="text-sm text-neutral-400 mr-2 hidden sm:inline">
+                                {user?.firstName || user?.username}
+                            </span>
+                            <UserButton afterSignOutUrl="/" appearance={{
+                                elements: {
+                                    avatarBox: "w-9 h-9 border-2 border-white/10"
+                                }
+                            }} />
+                        </SignedIn>
+                    </div>
                 </div>
             </header>
 
@@ -195,13 +215,27 @@ export default function Dashboard() {
                             <span>Total</span>
                             <span className="text-green-400">FREE</span>
                         </div>
-                        <button
-                            onClick={handleSave}
-                            disabled={saving}
-                            className="w-full mt-4 py-3 bg-white text-black font-bold rounded-xl hover:bg-neutral-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {saving ? "Saving..." : "Save Routine to Profile"}
-                        </button>
+
+                        {isSignedIn ? (
+                            <button
+                                onClick={handleSave}
+                                disabled={saving}
+                                className="w-full mt-4 py-3 bg-white text-black font-bold rounded-xl hover:bg-neutral-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                {saving ? "Saving..." : (
+                                    <>
+                                        <span>Save Routine to Profile</span>
+                                    </>
+                                )}
+                            </button>
+                        ) : (
+                            <SignInButton mode="modal">
+                                <button className="w-full mt-4 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-500 transition-colors flex items-center justify-center gap-2">
+                                    <Lock className="w-4 h-4" />
+                                    <span>Sign In to Save</span>
+                                </button>
+                            </SignInButton>
+                        )}
                     </div>
                 </div>
 
