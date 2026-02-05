@@ -36,7 +36,7 @@ export default function Dashboard() {
             <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6">
 
                 {/* Ingredient Selector - Bento Item 1 (Left Col) */}
-                <div className="md:col-span-7 glass rounded-3xl p-8 relative overflow-hidden group">
+                <div className="md:col-span-7 bg-card/60 backdrop-blur-xl border border-white/10 shadow-xl rounded-3xl p-8 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-32 bg-blue-500/10 blur-[100px] rounded-full pointer-events-none" />
                     <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
                         Available Compounds
@@ -68,7 +68,7 @@ export default function Dashboard() {
 
                 {/* Audit Results - Bento Item 2 (Right Col) */}
                 <div className={cn(
-                    "md:col-span-5 glass rounded-3xl p-8 border-l-4 transition-colors duration-500 flex flex-col",
+                    "md:col-span-5 bg-card/60 backdrop-blur-xl border border-white/10 shadow-xl rounded-3xl p-8 border-l-4 transition-colors duration-500 flex flex-col",
                     conflicts.length > 0 ? "border-red-500 bg-red-950/10" : "border-green-500 bg-green-950/10"
                 )}>
                     <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
