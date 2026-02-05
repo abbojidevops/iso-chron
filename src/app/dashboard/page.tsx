@@ -75,8 +75,20 @@ export default function Dashboard() {
                     <FlaskConical className="w-8 h-8 text-blue-500" />
                     Bio-Audit Dashboard
                 </h1>
-                <div className="bg-blue-600/20 text-blue-400 px-4 py-1 rounded-full text-xs font-mono border border-blue-500/30">
-                    PREMIUM ACCOUNT
+                <div className="flex items-center gap-4">
+                    <div className="bg-blue-600/20 text-blue-400 px-4 py-1 rounded-full text-xs font-mono border border-blue-500/30">
+                        PREMIUM ACCOUNT
+                    </div>
+                    <SignedOut>
+                        <SignInButton mode="modal">
+                            <button className="text-sm font-medium hover:text-blue-400 transition-colors">
+                                Sign In
+                            </button>
+                        </SignInButton>
+                    </SignedOut>
+                    <SignedIn>
+                        <UserButton afterSignOutUrl="/" />
+                    </SignedIn>
                 </div>
             </header>
 
