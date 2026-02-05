@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { UserButton, SignInButton, SignedIn, SignedOut, useSession, useUser } from "@clerk/nextjs";
-import { INGREDIENTS, checkConflicts, type Conflict } from "@/lib/ingredients";
+import { INGREDIENTS } from "@/lib/ingredients";
+import { runMolecularAudit } from "@/lib/conflict-engine"; // New Engine
 import { cn } from "@/lib/utils";
-import { AlertTriangle, X, FlaskConical, ShieldCheck, Lock } from "lucide-react";
+import { AlertTriangle, X, FlaskConical, ShieldCheck, Lock, CheckCircle, Flame, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@supabase/supabase-js";
 
@@ -12,7 +13,9 @@ export default function Dashboard() {
     const { session } = useSession();
     const { isSignedIn, user } = useUser();
     const [selectedIngredients, setSelectedIngredients] = useState<string[]>([]);
-    const [conflicts, setConflicts] = useState<Conflict[]>([]);
+
+    // Derived state from the new engine
+    const { finalScore, conflicts, status } = runMolecularAudit(selectedIngredients);
 
     const toggleIngredient = (id: string) => {
         let next: string[];
@@ -22,7 +25,6 @@ export default function Dashboard() {
             next = [...selectedIngredients, id];
         }
         setSelectedIngredients(next);
-        setConflicts(checkConflicts(next));
     };
 
     const [saving, setSaving] = useState(false);
@@ -32,29 +34,22 @@ export default function Dashboard() {
 
         setSaving(true);
         try {
-            // 1. Get the Supabase Token from Clerk
-            // IMPORTANT: User must create a JWT Template named 'supabase' in Clerk Dashboard
             const token = await session?.getToken({ template: 'supabase' });
 
             if (!token) {
-                // Fallback for user if they haven't set up the template yet
-                console.warn("No Supabase token found. Check Clerk Dashboard > JWT Templates.");
-                // We'll throw only if we strictly need RLS. 
-                // For now, let's try to alert nicely.
+                console.warn("No Supabase token found.");
                 throw new Error("Missing Supabase JWT Template in Clerk.");
             }
 
-            // 2. Initialize Supabase with the Token
             const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
             const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
             const supabase = createClient(supabaseUrl, supabaseKey, {
                 global: { headers: { Authorization: `Bearer ${token}` } },
             });
 
-            // 3. Insert Data
             const { error } = await supabase.from('user_products').insert({
                 user_id: user.id,
-                product_name: "My Custom Routine",
+                product_name: `Routine Analysis - Score ${finalScore}`, // Dynamic name
                 ingredient_ids: selectedIngredients
             });
 
@@ -84,7 +79,6 @@ export default function Dashboard() {
                 </div>
 
                 <div className="flex items-center gap-4">
-                    {/* Premium Badge - Only show if not signed in or actual premium logic */}
                     <div className="hidden md:block bg-gradient-to-r from-blue-600/20 to-purple-600/20 text-blue-300 px-4 py-1.5 rounded-full text-xs font-mono border border-blue-500/30">
                         ISO-CHRON v1.0
                     </div>
@@ -115,7 +109,7 @@ export default function Dashboard() {
 
             <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6">
 
-                {/* Ingredient Selector - Bento Item 1 (Left Col) */}
+                {/* Ingredient Selector */}
                 <div className="md:col-span-7 bg-card/60 backdrop-blur-xl border border-white/10 shadow-xl rounded-3xl p-8 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-32 bg-blue-500/10 blur-[100px] rounded-full pointer-events-none" />
                     <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
@@ -146,38 +140,68 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                {/* Audit Results - Bento Item 2 (Right Col) */}
+                {/* NEW Molecular Visualizer Component */}
                 <div className={cn(
-                    "md:col-span-5 bg-card/60 backdrop-blur-xl border border-white/10 shadow-xl rounded-3xl p-8 border-l-4 transition-colors duration-500 flex flex-col",
-                    conflicts.length > 0 ? "border-red-500 bg-red-950/10" : "border-green-500 bg-green-950/10"
+                    "md:col-span-5 bg-card/60 backdrop-blur-xl border shadow-xl rounded-3xl p-8 transition-colors duration-500 flex flex-col relative overflow-hidden",
+                    status === 'Hazardous' ? 'border-red-500/50 bg-red-950/20 shadow-[0_0_30px_rgba(239,68,68,0.2)]' :
+                        status === 'Caution' ? 'border-amber-500/50 bg-amber-950/20 shadow-[0_0_30px_rgba(245,158,11,0.2)]' :
+                            'border-blue-500/20 bg-black/40 shadow-[0_0_30px_rgba(59,130,246,0.1)]'
                 )}>
-                    <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
+                    {status === 'Hazardous' && <div className="absolute inset-0 bg-red-500/5 animate-pulse pointer-events-none" />}
+
+                    <h2 className="text-xl font-semibold mb-6 flex items-center gap-2 z-10">
                         Molecular Analysis
-                        {conflicts.length > 0 ? (
-                            <AlertTriangle className="w-5 h-5 text-red-500 ml-auto" />
-                        ) : (
-                            <ShieldCheck className="w-5 h-5 text-green-500 ml-auto" />
-                        )}
+                        {status === 'Optimal' && <CheckCircle className="w-5 h-5 text-green-400" />}
+                        {status === 'Hazardous' && <Flame className="w-5 h-5 text-red-500 animate-pulse" />}
+                        {status === 'Caution' && <AlertTriangle className="w-5 h-5 text-amber-500" />}
                     </h2>
 
-                    <div className="flex-1 space-y-4">
-                        <AnimatePresence>
+                    {/* Safety Score Bar */}
+                    <div className="relative z-10 mb-8">
+                        <div className="flex justify-between items-end mb-2">
+                            <span className="text-sm font-mono opacity-70">SAFETY SCORE</span>
+                            <span className={cn("text-2xl font-bold font-mono",
+                                finalScore > 70 ? "text-green-400" : finalScore > 40 ? "text-amber-400" : "text-red-500"
+                            )}>
+                                {finalScore}/100
+                            </span>
+                        </div>
+                        <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
+                            <motion.div
+                                className={cn("h-full",
+                                    finalScore > 70 ? "bg-green-500 shadow-[0_0_10px_#22c55e]" :
+                                        finalScore > 40 ? "bg-amber-500 shadow-[0_0_10px_#f59e0b]" :
+                                            "bg-red-500 shadow-[0_0_10px_#ef4444]"
+                                )}
+                                initial={{ width: 0 }}
+                                animate={{ width: `${finalScore}%` }}
+                                transition={{ duration: 1, ease: "circOut" }}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex-1 space-y-4 z-10 min-h-[160px]">
+                        <AnimatePresence mode="popLayout">
                             {conflicts.length === 0 && selectedIngredients.length > 0 && (
                                 <motion.div
                                     initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                                    className="h-full flex flex-col items-center justify-center text-center text-neutral-500 space-y-4"
+                                    className="h-full flex flex-col items-center justify-center text-center text-neutral-500 space-y-4 pt-4"
                                 >
-                                    <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center">
+                                    <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center">
                                         <ShieldCheck className="w-8 h-8 text-green-500" />
                                     </div>
-                                    <p>Routine is chemically stable.</p>
+                                    <p className="text-sm">Synergy Optimal. No reactive compounds detected.</p>
                                 </motion.div>
                             )}
 
                             {selectedIngredients.length === 0 && (
-                                <div className="h-full flex flex-col items-center justify-center text-center text-neutral-600">
-                                    <p>Select ingredients to begin audit.</p>
-                                </div>
+                                <motion.div
+                                    initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                                    className="h-full flex flex-col items-center justify-center text-center text-neutral-600"
+                                >
+                                    <FlaskConical className="w-8 h-8 mb-3 opacity-20" />
+                                    <p>Select ingredients to begin digital scan...</p>
+                                </motion.div>
                             )}
 
                             {conflicts.map((conflict, i) => (
@@ -186,31 +210,29 @@ export default function Dashboard() {
                                     initial={{ opacity: 0, x: 20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     exit={{ opacity: 0, x: -20 }}
-                                    className="bg-red-500/10 border border-red-500/30 p-4 rounded-xl"
+                                    transition={{ delay: i * 0.1 }}
+                                    className={cn("p-4 rounded-xl border relative overflow-hidden",
+                                        conflict.severity === 'Critical' ? "bg-red-950/40 border-red-500/50" :
+                                            conflict.severity === 'High' ? "bg-red-900/20 border-red-500/30" :
+                                                "bg-amber-900/10 border-amber-500/30"
+                                    )}
                                 >
                                     <div className="flex items-center justify-between mb-2">
-                                        <div className="flex items-center gap-2 text-red-200 font-semibold text-sm">
-                                            <span className="uppercase">{INGREDIENTS.find(i => i.id === conflict.ingredientA)?.name}</span>
-                                            <span>+</span>
-                                            <span className="uppercase">{INGREDIENTS.find(i => i.id === conflict.ingredientB)?.name}</span>
+                                        <div className="flex items-center gap-2 font-mono text-xs uppercase tracking-widest opacity-80"
+                                            style={{ color: conflict.severity === 'Low' ? '#fbbf24' : '#f87171' }}>
+                                            <Zap className="w-3 h-3" />
+                                            {conflict.type}
                                         </div>
-                                        <span className="bg-red-500/20 text-red-300 text-[10px] px-2 py-0.5 rounded border border-red-500/30 uppercase tracking-wide">
-                                            {conflict.severity} Risk
-                                        </span>
                                     </div>
-                                    <p className="text-sm text-red-200/70 leading-relaxed">
-                                        {conflict.reason}
+                                    <p className="text-sm text-white/90 leading-relaxed font-light">
+                                        {conflict.message}
                                     </p>
                                 </motion.div>
                             ))}
                         </AnimatePresence>
                     </div>
 
-                    <div className="mt-8 pt-6 border-t border-white/5">
-                        <div className="flex justify-between items-center text-sm text-neutral-400">
-                            <span>Audit Cost</span>
-                            <span className="text-white line-through">$45.00</span>
-                        </div>
+                    <div className="mt-8 pt-6 border-t border-white/5 z-10">
                         <div className="flex justify-between items-center text-xl font-bold text-white mt-1">
                             <span>Total</span>
                             <span className="text-green-400">FREE</span>
@@ -220,11 +242,14 @@ export default function Dashboard() {
                             <button
                                 onClick={handleSave}
                                 disabled={saving}
-                                className="w-full mt-4 py-3 bg-white text-black font-bold rounded-xl hover:bg-neutral-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                className={cn("w-full mt-4 py-3 font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 relative overflow-hidden group",
+                                    status === 'Hazardous' ? "bg-red-600 hover:bg-red-500 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)]" :
+                                        "bg-white hover:bg-neutral-200 text-black shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+                                )}
                             >
                                 {saving ? "Saving..." : (
                                     <>
-                                        <span>Save Routine to Profile</span>
+                                        <span>Save Routine to Skin Dossier</span>
                                     </>
                                 )}
                             </button>
