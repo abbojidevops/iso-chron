@@ -1,11 +1,9 @@
-"use client";
-
 import { useState } from "react";
 import { INGREDIENTS, checkConflicts, type Conflict } from "@/lib/ingredients";
 import { cn } from "@/lib/utils";
 import { AlertTriangle, X, FlaskConical, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@supabase/supabase-js";
 
 export default function Dashboard() {
     const [selectedIngredients, setSelectedIngredients] = useState<string[]>([]);
@@ -34,7 +32,10 @@ export default function Dashboard() {
     const handleSave = async () => {
         setSaving(true);
         try {
-            const supabase = createClientComponentClient();
+            // Direct initialization using core SDK to avoid build issues with helpers
+            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+            const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+            const supabase = createClient(supabaseUrl, supabaseKey);
 
             // Check if user is logged in
             const { data: { session } } = await supabase.auth.getSession();
