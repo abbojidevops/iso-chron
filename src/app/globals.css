@@ -23,13 +23,14 @@ body {
 
 @layer utilities {
   .glass {
-    @apply bg-card backdrop-blur-xl border border-white/10 shadow-xl;
+    @apply backdrop-blur-xl border border-white/10 shadow-xl;
+    background-color: rgba(20, 20, 20, 0.6);
   }
-  
+
   .glass-hover {
     @apply hover:bg-white/5 transition-colors duration-300;
   }
-  
+
   .text-glow {
     text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
   }

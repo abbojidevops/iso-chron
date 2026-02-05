@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { INGREDIENTS, checkConflicts, type Conflict } from "@/lib/ingredients";
 import { cn } from "@/lib/utils";
-import { AlertTriangle, Plus, X, FlaskConical, ShieldCheck } from "lucide-react";
+import { AlertTriangle, X, FlaskConical, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Dashboard() {
