@@ -235,23 +235,21 @@ export default function Dashboard() {
                     <div className="mt-8 pt-6 border-t border-white/5 z-10">
                         <div className="flex justify-between items-center text-xl font-bold text-white mt-1">
                             <span>Total</span>
-                            <span className="text-green-400">FREE</span>
+                            <span className="text-white">$45.00</span>
                         </div>
 
                         {isSignedIn ? (
                             <button
-                                onClick={handleSave}
-                                disabled={saving}
-                                className={cn("w-full mt-4 py-3 font-bold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 relative overflow-hidden group",
-                                    status === 'Hazardous' ? "bg-red-600 hover:bg-red-500 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)]" :
-                                        "bg-white hover:bg-neutral-200 text-black shadow-[0_0_20px_rgba(255,255,255,0.2)]"
-                                )}
+                                onClick={async () => {
+                                    try {
+                                        const res = await fetch('/api/checkout', { method: 'POST' });
+                                        const data = await res.json();
+                                        if (data.url) window.location.href = data.url;
+                                    } catch (e) { alert("Checkout failed"); }
+                                }}
+                                className={cn("w-full mt-4 py-3 font-bold rounded-xl transition-all flex items-center justify-center gap-2 relative overflow-hidden group bg-white hover:bg-neutral-200 text-black shadow-[0_0_20px_rgba(255,255,255,0.2)]")}
                             >
-                                {saving ? "Saving..." : (
-                                    <>
-                                        <span>Save Routine to Skin Dossier</span>
-                                    </>
-                                )}
+                                <span>Purchase Premium Audit</span>
                             </button>
                         ) : (
                             <SignInButton mode="modal">
