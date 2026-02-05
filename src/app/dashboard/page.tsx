@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { UserButton, SignInButton, SignedIn, SignedOut } from "@clerk/nextjs";
 import { INGREDIENTS, checkConflicts, type Conflict } from "@/lib/ingredients";
 import { cn } from "@/lib/utils";
 import { AlertTriangle, X, FlaskConical, ShieldCheck } from "lucide-react";
