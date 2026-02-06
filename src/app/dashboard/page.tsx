@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { UserButton, SignInButton, SignedIn, SignedOut, useSession, useUser } from "@clerk/nextjs";
 import { INGREDIENTS } from "@/lib/ingredients";
 import { runMolecularAudit } from "@/lib/conflict-engine"; // New Engine
@@ -339,5 +339,14 @@ export default function Dashboard() {
 
             </div>
         </div>
+        </div >
+    );
+}
+
+export default function Dashboard() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center text-white">Loading Bio-Audit...</div>}>
+            <DashboardContent />
+        </Suspense>
     );
 }
