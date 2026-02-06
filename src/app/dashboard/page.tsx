@@ -243,9 +243,17 @@ export default function Dashboard() {
                                 onClick={async () => {
                                     try {
                                         const res = await fetch('/api/checkout', { method: 'POST' });
+
+                                        if (!res.ok) {
+                                            const errData = await res.json();
+                                            throw new Error(errData.error || "Checkout request failed");
+                                        }
+
                                         const data = await res.json();
                                         if (data.url) window.location.href = data.url;
-                                    } catch (e) { alert("Checkout failed"); }
+                                    } catch (e: any) {
+                                        alert(`Checkout Error: ${e.message}`);
+                                    }
                                 }}
                                 className={cn("w-full mt-4 py-3 font-bold rounded-xl transition-all flex items-center justify-center gap-2 relative overflow-hidden group bg-white hover:bg-neutral-200 text-black shadow-[0_0_20px_rgba(255,255,255,0.2)]")}
                             >
