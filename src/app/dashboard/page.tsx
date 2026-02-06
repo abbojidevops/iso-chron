@@ -10,9 +10,14 @@ import { AlertTriangle, X, FlaskConical, ShieldCheck, Lock, CheckCircle, Flame, 
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@supabase/supabase-js";
 
+import { useSearchParams } from "next/navigation";
+
 export default function Dashboard() {
     const { session } = useSession();
     const { isSignedIn, user } = useUser();
+    const searchParams = useSearchParams();
+    const isPremium = searchParams.get('success') === 'true'; // Basic gating for demo
+
     const [selectedIngredients, setSelectedIngredients] = useState<string[]>([]);
 
     // Derived state from the new engine
@@ -234,10 +239,13 @@ export default function Dashboard() {
                     </div>
 
                     {/* NEW: Chrono-Splitter Timeline (Premium Feature) */}
-                    <div className="mt-8 pt-6 border-t border-white/5 z-10">
-                        <h3 className="text-sm font-semibold text-neutral-400 mb-4 uppercase tracking-wider">Routine Timeline</h3>
+                    <div className="mt-8 pt-6 border-t border-white/5 z-10 relative">
+                        <h3 className="text-sm font-semibold text-neutral-400 mb-4 uppercase tracking-wider flex items-center gap-2">
+                            Routine Timeline
+                            {!isPremium && <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/20">PREMIUM</span>}
+                        </h3>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className={cn("grid grid-cols-2 gap-4 transition-all duration-500", !isPremium && "blur-sm opacity-50 grayscale")}>
                             {/* AM Routine */}
                             <div className="bg-orange-500/5 border border-orange-500/20 rounded-xl p-4">
                                 <div className="flex items-center gap-2 mb-3 text-orange-300">
@@ -254,8 +262,6 @@ export default function Dashboard() {
                                     ) : (
                                         <p className="text-xs text-neutral-500 italic">No AM actives selected</p>
                                     )}
-
-                                    {/* Always show Any/Hydrators in AM too? Or split based on load? For now, we put 'Any' here too or separate */}
                                 </div>
                             </div>
 
@@ -278,6 +284,19 @@ export default function Dashboard() {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Lock Overlay */}
+                        {!isPremium && (
+                            <div className="absolute inset-0 z-20 flex items-center justify-center">
+                                <div className="bg-black/80 backdrop-blur-md border border-white/10 p-6 rounded-2xl text-center shadow-2xl">
+                                    <Lock className="w-8 h-8 text-amber-500 mx-auto mb-3" />
+                                    <h4 className="text-lg font-bold text-white mb-1">Premium Feature</h4>
+                                    <p className="text-sm text-neutral-400 mb-4 max-w-[200px] mx-auto">
+                                        Unlock the Chrono-Splitter to optimize your AM/PM routine.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="mt-8 pt-6 border-t border-white/5 z-10">
