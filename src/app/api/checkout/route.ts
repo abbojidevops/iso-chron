@@ -11,6 +11,12 @@ export async function POST(req: Request) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
+        // Get App URL with fallback and scheme validation
+        let appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+        if (!appUrl.startsWith("http")) {
+            appUrl = `https://${appUrl}`;
+        }
+
         // Create a Checkout Session
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ["card"],
@@ -28,8 +34,8 @@ export async function POST(req: Request) {
                 },
             ],
             mode: "payment",
-            success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?success=true`,
-            cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?canceled=true`,
+            success_url: `${appUrl}/dashboard?success=true`,
+            cancel_url: `${appUrl}/dashboard?canceled=true`,
             metadata: {
                 userId: userId,
             },
