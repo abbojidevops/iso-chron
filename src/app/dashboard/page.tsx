@@ -4,8 +4,9 @@ import { useState } from "react";
 import { UserButton, SignInButton, SignedIn, SignedOut, useSession, useUser } from "@clerk/nextjs";
 import { INGREDIENTS } from "@/lib/ingredients";
 import { runMolecularAudit } from "@/lib/conflict-engine"; // New Engine
+import { runChronoSplit, getIngredientName } from "@/lib/chrono-splitter"; // Chrono Logic
 import { cn } from "@/lib/utils";
-import { AlertTriangle, X, FlaskConical, ShieldCheck, Lock, CheckCircle, Flame, Zap } from "lucide-react";
+import { AlertTriangle, X, FlaskConical, ShieldCheck, Lock, CheckCircle, Flame, Zap, Sun, Moon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@supabase/supabase-js";
 
@@ -230,6 +231,53 @@ export default function Dashboard() {
                                 </motion.div>
                             ))}
                         </AnimatePresence>
+                    </div>
+
+                    {/* NEW: Chrono-Splitter Timeline (Premium Feature) */}
+                    <div className="mt-8 pt-6 border-t border-white/5 z-10">
+                        <h3 className="text-sm font-semibold text-neutral-400 mb-4 uppercase tracking-wider">Routine Timeline</h3>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            {/* AM Routine */}
+                            <div className="bg-orange-500/5 border border-orange-500/20 rounded-xl p-4">
+                                <div className="flex items-center gap-2 mb-3 text-orange-300">
+                                    <Sun className="w-5 h-5" />
+                                    <span className="font-bold">Morning (AM)</span>
+                                </div>
+                                <div className="space-y-2">
+                                    {runChronoSplit(selectedIngredients).am.length > 0 ? (
+                                        runChronoSplit(selectedIngredients).am.map(id => (
+                                            <div key={id} className="text-sm bg-orange-500/10 px-3 py-1.5 rounded-lg border border-orange-500/10 text-orange-100 flex items-center justify-between">
+                                                <span>{getIngredientName(id)}</span>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-xs text-neutral-500 italic">No AM actives selected</p>
+                                    )}
+
+                                    {/* Always show Any/Hydrators in AM too? Or split based on load? For now, we put 'Any' here too or separate */}
+                                </div>
+                            </div>
+
+                            {/* PM Routine */}
+                            <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-xl p-4">
+                                <div className="flex items-center gap-2 mb-3 text-indigo-300">
+                                    <Moon className="w-5 h-5" />
+                                    <span className="font-bold">Evening (PM)</span>
+                                </div>
+                                <div className="space-y-2">
+                                    {runChronoSplit(selectedIngredients).pm.length > 0 ? (
+                                        runChronoSplit(selectedIngredients).pm.map(id => (
+                                            <div key={id} className="text-sm bg-indigo-500/10 px-3 py-1.5 rounded-lg border border-indigo-500/10 text-indigo-100 flex items-center justify-between">
+                                                <span>{getIngredientName(id)}</span>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-xs text-neutral-500 italic">No PM actives selected</p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="mt-8 pt-6 border-t border-white/5 z-10">
