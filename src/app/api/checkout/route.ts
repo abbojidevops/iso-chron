@@ -12,9 +12,9 @@ export async function POST(req: Request) {
         }
 
         // Get App URL dynamically from request headers
-        // Priority: Origin -> Host -> Env Var -> Localhost
+        // Priority: Origin -> Host -> VERCEL_URL -> Env Var -> Localhost
         const origin = req.headers.get("origin");
-        const host = req.headers.get("host"); // e.g. "iso-chron.vercel.app"
+        const host = req.headers.get("host");
         const protocol = req.headers.get("x-forwarded-proto") || "https";
 
         let appUrl = "";
@@ -23,11 +23,13 @@ export async function POST(req: Request) {
             appUrl = origin;
         } else if (host) {
             appUrl = `${protocol}://${host}`;
+        } else if (process.env.VERCEL_URL) {
+            appUrl = `https://${process.env.VERCEL_URL}`;
         } else {
             appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
         }
 
-        // Ensure scheme
+        // Ensure scheme (redundant but safe)
         if (appUrl && !appUrl.startsWith("http")) {
             appUrl = `https://${appUrl}`;
         }
