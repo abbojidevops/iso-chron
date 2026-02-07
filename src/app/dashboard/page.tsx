@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@supabase/supabase-js";
 import { MolecularVisualizer } from "@/components/canvas/MolecularVisualizer";
 import { OCRScanner } from "@/components/ocr/OCRScanner";
+import { AIChat } from "@/components/chat/AIChat";
 
 import { useSearchParams } from "next/navigation";
 declare global {
@@ -544,19 +545,28 @@ function DashboardContent() {
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-4">
-                                    <div className={cn("px-3 py-1 rounded-full text-xs font-bold font-mono border",
-                                        record.score > 70 ? "bg-green-500/20 text-green-400 border-green-500/30" :
-                                            record.score > 40 ? "bg-amber-500/20 text-amber-400 border-amber-500/30" :
-                                                "bg-red-500/20 text-red-400 border-red-500/30"
-                                    )}>
-                                        SCORE: {record.score}
-                                    </div>
+                                    {record.score !== undefined && record.score !== null ? (
+                                        <div className={cn("px-3 py-1 rounded-full text-xs font-bold font-mono border",
+                                            record.score > 70 ? "bg-green-500/20 text-green-400 border-green-500/30" :
+                                                record.score > 40 ? "bg-amber-500/20 text-amber-400 border-amber-500/30" :
+                                                    "bg-red-500/20 text-red-400 border-red-500/30"
+                                        )}>
+                                            SCORE: {record.score}
+                                        </div>
+                                    ) : (
+                                        <div className="px-3 py-1 rounded-full text-xs font-bold font-mono border bg-neutral-500/20 text-neutral-400 border-neutral-500/30">
+                                            SCORE: N/A
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         ))
                     )}
                 </div>
             </div>
+            {/* AI Assistant */}
+            <AIChat context={`Score: ${finalScore}, Risk: ${status}, Actives: ${selectedIngredients.length}`} />
+
         </div>
     );
 }
