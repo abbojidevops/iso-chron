@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { auth } from '@clerk/nextjs';
+import { auth } from '@clerk/nextjs/server';
 import RoutineCard from '@/components/dashboard/RoutineCard';
 import { MolecularRoutine } from '@/lib/types';
 import Link from 'next/link';

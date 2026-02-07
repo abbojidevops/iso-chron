@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from '@supabase/supabase-js'
-import { auth } from '@clerk/nextjs'
+import { auth } from '@clerk/nextjs/server'
 import { revalidatePath } from 'next/cache'
 
 export async function deleteRoutine(routineId: string) {
