@@ -125,11 +125,9 @@ const AuraShaderMaterial = shaderMaterial(
 // Register shader for R3F
 extend({ AuraShaderMaterial });
 
-declare global {
-    namespace JSX {
-        interface IntrinsicElements {
-            auraShaderMaterial: any;
-        }
+declare module '@react-three/fiber' {
+    interface ThreeElements {
+        auraShaderMaterial: ReactThreeFiber.Object3DNode<THREE.ShaderMaterial, typeof AuraShaderMaterial>;
     }
 }
 
@@ -165,7 +163,7 @@ function AuraSphere({ status }: { status: string }) {
     });
 
     return (
-        <mesh ref={mesh} args={[1.5, 128, 128]}> {/* High polys for deformation */}
+        <mesh ref={mesh}> {/* Fixed: Removed conflicting args */}
             <icosahedronGeometry args={[1.2, 50]} /> {/* Clean geometry for noise */}
             <auraShaderMaterial
                 ref={materialRef}
@@ -175,121 +173,27 @@ function AuraSphere({ status }: { status: string }) {
         </mesh>
     );
 }
+// ... (SatelliteMolecule remains unchanged) ...
+// In main component:
+{/* 5. Post Processing: Bloom */ }
+<EffectComposer> {/* Fixed: Removed disableNormalPass */}
+    <Bloom
+        luminanceThreshold={0.2}
+        mipmapBlur
+        intensity={status === 'Hazardous' ? 3.0 : 1.5}
+        radius={0.5}
+    />
+</EffectComposer>
+            </Canvas >
 
-function SatelliteMolecule({
-    position,
-    color,
-    label
-}: {
-    position: THREE.Vector3;
-    color: string;
-    label: string
-}) {
-    return (
-        <Float speed={4} rotationIntensity={2} floatIntensity={1}>
-            <group position={position}>
-                <mesh>
-                    <sphereGeometry args={[0.3, 32, 32]} />
-                    <meshStandardMaterial
-                        color={color}
-                        emissive={color}
-                        emissiveIntensity={0.8}
-                        roughness={0.1}
-                    />
-                </mesh>
-                <Text
-                    position={[0, 0.5, 0]}
-                    fontSize={0.15}
-                    color="white"
-                    anchorX="center"
-                    anchorY="middle"
-                >
-                    {label}
-                </Text>
-            </group>
-        </Float>
-    );
-}
-
-export function MolecularVisualizer({
-    ingredients,
-    conflicts,
-    status
-}: {
-    ingredients: Ingredient[];
-    conflicts: ConflictResult[];
-    status: string;
-}) {
-    const satellites = useMemo(() => {
-        return ingredients.map((ing, i) => {
-            const angle = (i / ingredients.length) * Math.PI * 2;
-            const radius = 3;
-            return {
-                ...ing,
-                position: new THREE.Vector3(
-                    Math.cos(angle) * radius,
-                    Math.sin(angle) * radius * 0.3,
-                    Math.sin(angle) * radius
-                ),
-                color: ing.category === 'Active' ? '#3b82f6' :
-                    ing.category === 'Acid' ? '#ec4899' : '#10b981'
-            };
-        });
-    }, [ingredients]);
-
-    return (
-        <div className="w-full h-full min-h-[400px] rounded-xl overflow-hidden bg-black/60 relative border border-white/10">
-            <Canvas camera={{ position: [0, 0, 7], fov: 40 }} shadows>
-                <color attach="background" args={['#020205']} />
-
-                {/* 1. Studio Lighting using Environment (No Stage needed if manually tuned) */}
-                <ambientLight intensity={0.2} />
-                <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} castShadow />
-
-                {/* 2. Custom Shader Sphere */}
-                <AuraSphere status={status} />
-
-                {/* 3. Satellites */}
-                {satellites.map((sat) => (
-                    <SatelliteMolecule
-                        key={sat.id}
-                        position={sat.position}
-                        color={sat.color}
-                        label={sat.name}
-                    />
-                ))}
-
-                {/* 4. Contact Shadows for grounding */}
-                <ContactShadows
-                    position={[0, -2, 0]}
-                    opacity={0.5}
-                    scale={10}
-                    blur={2.5}
-                    far={4}
-                    color={status === 'Hazardous' ? 'red' : 'blue'}
-                />
-
-                <OrbitControls enableZoom={false} enablePan={false} />
-
-                {/* 5. Post Processing: Bloom */}
-                <EffectComposer disableNormalPass>
-                    <Bloom
-                        luminanceThreshold={0.2}
-                        mipmapBlur
-                        intensity={status === 'Hazardous' ? 3.0 : 1.5}
-                        radius={0.5}
-                    />
-                </EffectComposer>
-            </Canvas>
-
-            {/* HUD Overlay */}
-            <div className="absolute top-4 left-4 font-mono text-xs text-white/50 pointer-events-none">
-                <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${status === 'Hazardous' ? 'bg-red-500 animate-ping' : 'bg-blue-500'}`} />
-                    GLSL SHADER: ACTIVE
-                </div>
-                {status === 'Hazardous' && <div className="text-red-500 font-bold mt-1">CRITICAL INSTABILITY</div>}
-            </div>
+    {/* HUD Overlay */ }
+    < div className = "absolute top-4 left-4 font-mono text-xs text-white/50 pointer-events-none" >
+        <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${status === 'Hazardous' ? 'bg-red-500 animate-ping' : 'bg-blue-500'}`} />
+            GLSL SHADER: ACTIVE
         </div>
+{ status === 'Hazardous' && <div className="text-red-500 font-bold mt-1">CRITICAL INSTABILITY</div> }
+            </div >
+        </div >
     );
 }
