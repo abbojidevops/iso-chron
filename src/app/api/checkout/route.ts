@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { stripe } from "@/lib/stripe";
 
+export const dynamic = 'force-dynamic'; // Prevent static analysis/prerendering
+
+
 export async function POST(req: Request) {
     try {
         const { userId } = await auth();
