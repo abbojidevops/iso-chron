@@ -26,25 +26,22 @@ export async function POST(req: Request) {
         const userId = session.metadata?.userId;
 
         if (userId) {
-            // Initialize Supabase Admin
+            // ERROR: Using ANON key fails due to RLS.
+            // FIX: Use SERVICE_ROLE_KEY to bypass RLS for admin writes.
             const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-            const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+            const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-            // NOTE: Using anon key for now. In production, use SERVICE_ROLE_KEY for reliable admin writes.
-            // For this hackathon/MVP, we enabled "Users can insert own profile" which might allow this to work 
-            // if the webhook could simulate the user, but webhooks are server-side.
-            // 
-            // CRITICAL: We really need a Service Role Key to bypass RLS for webhooks.
-            // However, to keep it simple without asking user for more keys right now, 
-            // we will try to UPSERT. If it fails due to RLS, we might need to ask user for Service Key.
-            //
-            // Actually, let's assume the user provided the ANON key which has RLS.
-            // Webhook doesn't have a user session. 
-            //
-            // -> We will try to just run the INSERT. If it fails, we log it. 
-            // A proper fix requires the SERVICE_ROLE_KEY. 
+            if (!supabaseServiceKey) {
+                console.error("CRITICAL: Missing SUPABASE_SERVICE_ROLE_KEY. Premium status update failed.");
+                return new NextResponse("Server Configuration Error", { status: 500 });
+            }
 
-            const supabase = createClient(supabaseUrl, supabaseKey);
+            const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+                auth: {
+                    autoRefreshToken: false,
+                    persistSession: false
+                }
+            });
 
             // Payload
             const profileData = {
