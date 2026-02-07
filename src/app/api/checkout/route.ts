@@ -11,8 +11,11 @@ export async function POST(req: Request) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
-        // Get App URL with fallback and scheme validation
-        let appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+        // Get App URL dynamically from request origin
+        const origin = req.headers.get("origin");
+        let appUrl = origin || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+        // Ensure scheme
         if (!appUrl.startsWith("http")) {
             appUrl = `https://${appUrl}`;
         }
