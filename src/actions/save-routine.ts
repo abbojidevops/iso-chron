@@ -2,7 +2,6 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
-import { auth } from '@clerk/nextjs'
 
 // We need to use the Clerk -> Supabase connection flow for Server Actions
 // Since we are in a Next.js 15 Server Action, we can't use the client-side createClient directly with the user's session from the browser easily without passing the token.

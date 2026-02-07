@@ -14,6 +14,7 @@ import { MolecularVisualizer } from "@/components/canvas/MolecularVisualizer";
 import { OCRScanner } from "@/components/ocr/OCRScanner";
 import { AIChat } from "@/components/chat/AIChat";
 import { MolecularRoutine } from "@/lib/types";
+import { saveMolecularRoutine } from "@/actions/save-routine";
 
 import { useSearchParams } from "next/navigation";
 declare global {
@@ -175,7 +176,6 @@ function DashboardContent() {
             }
 
             // Use Server Action
-            const { saveMolecularRoutine } = await import("@/actions/save-routine");
             const result = await saveMolecularRoutine(token, {
                 ingredients: selectedIngredients,
                 safetyScore: finalScore,
