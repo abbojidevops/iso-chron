@@ -1,20 +1,22 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { Canvas, useFrame, extend, ReactThreeFiber } from "@react-three/fiber";
 import {
     Text,
     Float,
     OrbitControls,
     ContactShadows,
-    shaderMaterial
+    shaderMaterial,
+    MeshTransmissionMaterial,
+    Environment
 } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import * as THREE from "three";
 import { Ingredient } from "@/lib/ingredients";
 import { ConflictResult } from "@/lib/conflict-engine";
 
-// --- Custom Shader Material ---
+// --- Custom Shader Material (Inner Core) ---
 
 const AuraShaderMaterial = shaderMaterial(
     {
@@ -85,10 +87,11 @@ const AuraShaderMaterial = shaderMaterial(
         vUv = uv;
         
         // Turbulence logic
-        float noise = snoise(position * 2.0 + uTime * (1.0 + uDeform * 5.0)); // Faster when Hazardous
+        float noise = snoise(position * 2.0 + uTime * (1.0 + uDeform * 5.0));
         
         // Deform vertices based on noise and uDeform intensity
-        vec3 newPosition = position + normal * noise * (0.1 + uDeform * 0.4);
+        // More subtle when inside glass
+        vec3 newPosition = position + normal * noise * (0.1 + uDeform * 0.3);
         
         vDisplacement = noise;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
@@ -125,18 +128,16 @@ const AuraShaderMaterial = shaderMaterial(
 // Register shader for R3F
 extend({ AuraShaderMaterial });
 
-// Add types for the custom shader element
 declare module '@react-three/fiber' {
     interface ThreeElements {
         auraShaderMaterial: any;
     }
 }
 
-function AuraSphere({ status }: { status: string }) {
+function HybridCore({ status }: { status: string }) {
     const mesh = useRef<THREE.Mesh>(null);
     const materialRef = useRef<THREE.ShaderMaterial>(null);
 
-    // Determine visuals based on status
     const targetColor = useMemo(() => {
         if (status === 'Hazardous') return new THREE.Color('#ff0000');
         if (status === 'Caution') return new THREE.Color('#f59e0b');
@@ -147,7 +148,6 @@ function AuraSphere({ status }: { status: string }) {
         if (materialRef.current) {
             materialRef.current.uniforms.uTime.value = state.clock.elapsedTime;
 
-            // Smoothly transition deform intensity
             const targetDeform = status === 'Hazardous' ? 1.0 : 0.0;
             materialRef.current.uniforms.uDeform.value = THREE.MathUtils.lerp(
                 materialRef.current.uniforms.uDeform.value,
@@ -155,23 +155,41 @@ function AuraSphere({ status }: { status: string }) {
                 0.05
             );
 
-            // Smoothly transition color
             materialRef.current.uniforms.uColor.value.lerp(targetColor, 0.05);
-
-            // Pulse intensity for Hazard
             materialRef.current.uniforms.uIntensity.value = status === 'Hazardous' ? 2.5 : 1.5;
         }
     });
 
     return (
-        <mesh ref={mesh}>
-            <icosahedronGeometry args={[1.2, 50]} />
-            <auraShaderMaterial
-                ref={materialRef}
-                transparent
-                side={THREE.DoubleSide}
-            />
-        </mesh>
+        <group>
+            {/* INNER: Pulsing Shader Core */}
+            <mesh ref={mesh} scale={0.8}>
+                <icosahedronGeometry args={[1.2, 50]} />
+                <auraShaderMaterial
+                    ref={materialRef}
+                    transparent
+                    side={THREE.DoubleSide}
+                />
+            </mesh>
+
+            {/* OUTER: Glass Shell */}
+            <mesh scale={1.0}>
+                <sphereGeometry args={[1.3, 64, 64]} />
+                <MeshTransmissionMaterial
+                    backside
+                    thickness={0.2}
+                    roughness={0.1}
+                    transmission={0.9}
+                    ior={1.5}
+                    chromaticAberration={0.1}
+                    anisotropy={0.1}
+                    distortion={0.2}
+                    distortionScale={0.3}
+                    temporalDistortion={0.1}
+                    background={new THREE.Color('#000000')}
+                />
+            </mesh>
+        </group>
     );
 }
 
@@ -189,13 +207,21 @@ function SatelliteMolecule({
             <group position={position}>
                 <mesh>
                     <sphereGeometry args={[0.3, 32, 32]} />
-                    <meshStandardMaterial
+                    {/* Upgrade to Glassy look for ingredients */}
+                    <MeshTransmissionMaterial
                         color={color}
-                        emissive={color}
-                        emissiveIntensity={0.8}
-                        roughness={0.1}
+                        thickness={2}
+                        roughness={0.2}
+                        transmission={0.6}
+                        ior={1.2}
                     />
                 </mesh>
+                {/* Inner solid core for readability/color pop */}
+                <mesh scale={0.5}>
+                    <sphereGeometry args={[0.3, 16, 16]} />
+                    <meshBasicMaterial color={color} />
+                </mesh>
+
                 <Text
                     position={[0, 0.5, 0]}
                     fontSize={0.15}
@@ -210,6 +236,42 @@ function SatelliteMolecule({
     );
 }
 
+function LaserScan({ active }: { active: boolean }) {
+    const group = useRef<THREE.Group>(null);
+
+    useFrame((state, delta) => {
+        if (group.current && active) {
+            // Sweep up and down
+            const t = state.clock.elapsedTime;
+            group.current.position.y = Math.sin(t * 2) * 3;
+            group.current.rotation.z += delta * 0.5;
+        }
+    });
+
+    if (!active) return null;
+
+    return (
+        <group ref={group}>
+            {/* Scanning Ring */}
+            <mesh rotation={[Math.PI / 2, 0, 0]}>
+                <ringGeometry args={[2.8, 2.85, 64]} />
+                <meshBasicMaterial color="#00ffcc" transparent opacity={0.6} side={THREE.DoubleSide} />
+            </mesh>
+            {/* Scanning Plane */}
+            <mesh rotation={[Math.PI / 2, 0, 0]}>
+                <planeGeometry args={[6, 6]} />
+                <meshBasicMaterial
+                    color="#00ffcc"
+                    transparent
+                    opacity={0.05}
+                    side={THREE.DoubleSide}
+                    blending={THREE.AdditiveBlending}
+                />
+            </mesh>
+        </group>
+    );
+}
+
 export function MolecularVisualizer({
     ingredients,
     conflicts,
@@ -219,6 +281,17 @@ export function MolecularVisualizer({
     conflicts: ConflictResult[];
     status: string;
 }) {
+    const [isScanning, setIsScanning] = useState(false);
+
+    // Trigger scan on ingredient change
+    useEffect(() => {
+        if (ingredients.length > 0) {
+            setIsScanning(true);
+            const timer = setTimeout(() => setIsScanning(false), 2000); // 2s Scan
+            return () => clearTimeout(timer);
+        }
+    }, [ingredients.length]);
+
     const satellites = useMemo(() => {
         return ingredients.map((ing, i) => {
             const angle = (i / ingredients.length) * Math.PI * 2;
@@ -241,14 +314,15 @@ export function MolecularVisualizer({
             <Canvas camera={{ position: [0, 0, 7], fov: 40 }} shadows>
                 <color attach="background" args={['#020205']} />
 
-                {/* 1. Studio Lighting using Environment */}
+                {/* Studio Environment */}
+                <Environment preset="city" blur={1} />
                 <ambientLight intensity={0.2} />
                 <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} castShadow />
 
-                {/* 2. Custom Shader Sphere */}
-                <AuraSphere status={status} />
+                {/* Hybrid Core: Shader + Glass */}
+                <HybridCore status={status} />
 
-                {/* 3. Satellites */}
+                {/* Satellites */}
                 {satellites.map((sat) => (
                     <SatelliteMolecule
                         key={sat.id}
@@ -258,7 +332,9 @@ export function MolecularVisualizer({
                     />
                 ))}
 
-                {/* 4. Contact Shadows for grounding */}
+                {/* VFX */}
+                <LaserScan active={isScanning} />
+
                 <ContactShadows
                     position={[0, -2, 0]}
                     opacity={0.5}
@@ -270,12 +346,11 @@ export function MolecularVisualizer({
 
                 <OrbitControls enableZoom={false} enablePan={false} />
 
-                {/* 5. Post Processing: Bloom */}
-                <EffectComposer>
+                <EffectComposer disableNormalPass>
                     <Bloom
                         luminanceThreshold={0.2}
                         mipmapBlur
-                        intensity={status === 'Hazardous' ? 3.0 : 1.5}
+                        intensity={status === 'Hazardous' ? 3.0 : 1.0}
                         radius={0.5}
                     />
                 </EffectComposer>
@@ -285,8 +360,9 @@ export function MolecularVisualizer({
             <div className="absolute top-4 left-4 font-mono text-xs text-white/50 pointer-events-none">
                 <div className="flex items-center gap-2">
                     <div className={`w-2 h-2 rounded-full ${status === 'Hazardous' ? 'bg-red-500 animate-ping' : 'bg-blue-500'}`} />
-                    GLSL SHADER: ACTIVE
+                    VISUAL CORE: HYBRID
                 </div>
+                {isScanning && <div className="text-cyan-400 font-bold mt-1 animate-pulse">ANALYZING COMPOUND...</div>}
                 {status === 'Hazardous' && <div className="text-red-500 font-bold mt-1">CRITICAL INSTABILITY</div>}
             </div>
         </div>
