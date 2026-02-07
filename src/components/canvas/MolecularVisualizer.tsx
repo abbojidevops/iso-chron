@@ -128,7 +128,7 @@ extend({ AuraShaderMaterial });
 // Add types for the custom shader element
 declare module '@react-three/fiber' {
     interface ThreeElements {
-        auraShaderMaterial: ReactThreeFiber.Object3DNode<THREE.ShaderMaterial, typeof AuraShaderMaterial>;
+        auraShaderMaterial: any;
     }
 }
 
