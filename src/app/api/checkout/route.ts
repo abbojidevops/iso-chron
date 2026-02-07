@@ -12,19 +12,21 @@ export async function POST(req: Request) {
         }
 
         // Get App URL dynamically from request headers
-        // Priority: Origin -> Host -> VERCEL_URL -> Env Var -> Localhost
-        const origin = req.headers.get("origin");
-        const host = req.headers.get("host");
-        const protocol = req.headers.get("x-forwarded-proto") || "https";
+        // Best practice for Next.js on Vercel
+        let appUrl = process.env.NEXT_PUBLIC_APP_URL;
 
-        let appUrl = "";
+        if (!appUrl) {
+            const origin = req.headers.get("origin");
+            const host = req.headers.get("host");
+            const protocol = req.headers.get("x-forwarded-proto") || "https";
 
-        if (origin) {
-            appUrl = origin;
-        } else if (host) {
-            appUrl = `${protocol}://${host}`;
-        } else {
-            appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+            if (origin) {
+                appUrl = origin;
+            } else if (host) {
+                appUrl = `${protocol}://${host}`;
+            } else {
+                appUrl = "http://localhost:3000";
+            }
         }
 
         // Ensure scheme (redundant but safe)
