@@ -12,7 +12,7 @@ import { createClient } from "@supabase/supabase-js";
 
 import { useSearchParams } from "next/navigation";
 
-export default function Dashboard() {
+function DashboardContent() {
     const { session } = useSession();
     const { isSignedIn, user } = useUser();
     const searchParams = useSearchParams();
