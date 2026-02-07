@@ -111,6 +111,39 @@ function DashboardContent() {
         checkPremium();
     }, [user, searchParams]);
 
+    // History State
+    const [history, setHistory] = useState<any[]>([]);
+
+    const fetchHistory = async () => {
+        if (!user) return;
+        try {
+            const session = await window.Clerk?.session;
+            const token = await session?.getToken({ template: 'supabase' });
+            if (!token) return;
+
+            const supabase = createClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+                { global: { headers: { Authorization: `Bearer ${token}` } } }
+            );
+
+            const { data } = await supabase
+                .from('user_products')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false });
+
+            if (data) setHistory(data);
+        } catch (e) {
+            console.error("History fetch error:", e);
+        }
+    };
+
+    // Fetch History on Mount
+    useEffect(() => {
+        if (isSignedIn) fetchHistory();
+    }, [isSignedIn, user]);
+
     // Derived state from the new engine
     const { finalScore, conflicts, status } = runMolecularAudit(selectedIngredients);
 
@@ -146,9 +179,14 @@ function DashboardContent() {
 
             const { error } = await supabase.from('user_products').insert({
                 user_id: user.id,
-                product_name: `Routine Analysis - Score ${finalScore}`, // Dynamic name
-                ingredient_ids: selectedIngredients
+                product_name: `Routine Analysis - ${new Date().toLocaleTimeString()}`,
+                ingredient_ids: selectedIngredients,
+                score: finalScore,
+                status: status
             });
+
+            // Refresh history after save
+            await fetchHistory();
 
             if (error) throw error;
 
@@ -477,8 +515,50 @@ function DashboardContent() {
                     </div>
                 </div>
 
+                {/* Routine History (Right Column on Mobile, or Bottom) */}
+                <div className="md:col-span-12 lg:col-span-5 space-y-4">
+                    {/* We can put history here if we want a 3-col layout or just below */}
+                </div>
+
+            </div>
+
+            {/* Routine History Section - Full Width below main interaction area */}
+            <div className="max-w-6xl mx-auto mt-12">
+                <h3 className="text-xl font-light text-white/90 flex items-center gap-2 mb-6">
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                    Skin Dossier (History)
+                </h3>
+
+                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                    {history.length === 0 ? (
+                        <div className="col-span-full p-8 text-center border border-white/5 rounded-2xl bg-white/5 text-neutral-500">
+                            <p>No audits recorded yet.</p>
+                        </div>
+                    ) : (
+                        history.map((record) => (
+                            <div key={record.id} className="p-4 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between group hover:bg-white/10 transition-colors">
+                                <div>
+                                    <div className="font-medium text-white">{record.product_name}</div>
+                                    <div className="text-xs text-neutral-400 font-mono">
+                                        {new Date(record.created_at).toLocaleDateString()} • {record.ingredient_ids?.length || 0} actives
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <div className={cn("px-3 py-1 rounded-full text-xs font-bold font-mono border",
+                                        record.score > 70 ? "bg-green-500/20 text-green-400 border-green-500/30" :
+                                            record.score > 40 ? "bg-amber-500/20 text-amber-400 border-amber-500/30" :
+                                                "bg-red-500/20 text-red-400 border-red-500/30"
+                                    )}>
+                                        SCORE: {record.score}
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
             </div>
         </div>
+        </div >
     );
 }
 
