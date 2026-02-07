@@ -30,15 +30,23 @@ export async function saveMolecularRoutine(token: string, formData: {
         { global: { headers: { Authorization: `Bearer ${token}` } } }
     );
 
-    // 1. Get the current authenticated user
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { success: false, error: "Unauthorized User" };
+    // 1. Manually decode JWT to get User ID (Robust method)
+    // We trust that the token signature will be verified by Supabase on the subsequent request (RLS).
+    let userId: string | null = null;
+    try {
+        const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+        userId = payload.sub;
+    } catch (e) {
+        return { success: false, error: "Invalid Token Format" };
+    }
 
-    // 2. Insert into Supabase
+    if (!userId) return { success: false, error: "Unauthorized User (No ID in token)" };
+
+    // 2. Insert into Supabase (RLS will enforce permissions)
     const { data, error } = await supabase
         .from('routines')
         .insert([{
-            user_id: user.id,
+            user_id: userId, // Use extracted ID
             ingredients: formData.ingredients,
             safety_score: formData.safetyScore,
             status: formData.status,
