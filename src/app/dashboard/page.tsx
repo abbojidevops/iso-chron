@@ -331,132 +331,131 @@ function DashboardContent() {
                                 </motion.div>
                             ))}
                         </AnimatePresence>
-                            ))}
-                    </AnimatePresence>
-                </div>
 
-                {/* NEW: UV Index Alert */}
-                {uvAlert && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mb-8 p-4 bg-orange-500/10 border border-orange-500/50 rounded-xl flex items-start gap-3 relative overflow-hidden"
-                    >
-                        <div className="p-2 bg-orange-500/20 rounded-lg shrink-0">
-                            <Sun className="w-6 h-6 text-orange-400 animate-pulse" />
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-orange-200 text-sm uppercase tracking-wider mb-1">
-                                UV Correlation Alert
-                            </h3>
-                            <p className="text-sm text-orange-100/80">
-                                {uvAlert}
-                            </p>
-                        </div>
-                        {/* Heat distortion effect overlay could go here */}
-                    </motion.div>
-                )}
-
-                {/* NEW: Chrono-Splitter Timeline (Premium Feature) */}
-                <div className="mt-8 pt-6 border-t border-white/5 z-10 relative">
-                    <h3 className="text-sm font-semibold text-neutral-400 mb-4 uppercase tracking-wider flex items-center gap-2">
-                        Routine Timeline
-                        {!isPremium && <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/20">PREMIUM</span>}
-                    </h3>
-
-                    <div className={cn("grid grid-cols-2 gap-4 transition-all duration-500", !isPremium && "blur-sm opacity-50 grayscale")}>
-                        {/* AM Routine */}
-                        <div className="bg-orange-500/5 border border-orange-500/20 rounded-xl p-4">
-                            <div className="flex items-center gap-2 mb-3 text-orange-300">
-                                <Sun className="w-5 h-5" />
-                                <span className="font-bold">Morning (AM)</span>
-                            </div>
-                            <div className="space-y-2">
-                                {runChronoSplit(selectedIngredients).am.length > 0 ? (
-                                    runChronoSplit(selectedIngredients).am.map(id => (
-                                        <div key={id} className="text-sm bg-orange-500/10 px-3 py-1.5 rounded-lg border border-orange-500/10 text-orange-100 flex items-center justify-between">
-                                            <span>{getIngredientName(id)}</span>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <p className="text-xs text-neutral-500 italic">No AM actives selected</p>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* PM Routine */}
-                        <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-xl p-4">
-                            <div className="flex items-center gap-2 mb-3 text-indigo-300">
-                                <Moon className="w-5 h-5" />
-                                <span className="font-bold">Evening (PM)</span>
-                            </div>
-                            <div className="space-y-2">
-                                {runChronoSplit(selectedIngredients).pm.length > 0 ? (
-                                    runChronoSplit(selectedIngredients).pm.map(id => (
-                                        <div key={id} className="text-sm bg-indigo-500/10 px-3 py-1.5 rounded-lg border border-indigo-500/10 text-indigo-100 flex items-center justify-between">
-                                            <span>{getIngredientName(id)}</span>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <p className="text-xs text-neutral-500 italic">No PM actives selected</p>
-                                )}
-                            </div>
-                        </div>
                     </div>
 
-                    {/* Lock Overlay */}
-                    {!isPremium && (
-                        <div className="absolute inset-0 z-20 flex items-center justify-center">
-                            <div className="bg-black/80 backdrop-blur-md border border-white/10 p-6 rounded-2xl text-center shadow-2xl">
-                                <Lock className="w-8 h-8 text-amber-500 mx-auto mb-3" />
-                                <h4 className="text-lg font-bold text-white mb-1">Premium Feature</h4>
-                                <p className="text-sm text-neutral-400 mb-4 max-w-[200px] mx-auto">
-                                    Unlock the Chrono-Splitter to optimize your AM/PM routine.
+                    {/* NEW: UV Index Alert */}
+                    {uvAlert && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="mb-8 p-4 bg-orange-500/10 border border-orange-500/50 rounded-xl flex items-start gap-3 relative overflow-hidden"
+                        >
+                            <div className="p-2 bg-orange-500/20 rounded-lg shrink-0">
+                                <Sun className="w-6 h-6 text-orange-400 animate-pulse" />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-orange-200 text-sm uppercase tracking-wider mb-1">
+                                    UV Correlation Alert
+                                </h3>
+                                <p className="text-sm text-orange-100/80">
+                                    {uvAlert}
                                 </p>
                             </div>
-                        </div>
+                            {/* Heat distortion effect overlay could go here */}
+                        </motion.div>
                     )}
-                </div>
 
-                <div className="mt-8 pt-6 border-t border-white/5 z-10">
-                    <div className="flex justify-between items-center text-xl font-bold text-white mt-1">
-                        <span>Total</span>
-                        <span className="text-white">$45.00</span>
+                    {/* NEW: Chrono-Splitter Timeline (Premium Feature) */}
+                    <div className="mt-8 pt-6 border-t border-white/5 z-10 relative">
+                        <h3 className="text-sm font-semibold text-neutral-400 mb-4 uppercase tracking-wider flex items-center gap-2">
+                            Routine Timeline
+                            {!isPremium && <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/20">PREMIUM</span>}
+                        </h3>
+
+                        <div className={cn("grid grid-cols-2 gap-4 transition-all duration-500", !isPremium && "blur-sm opacity-50 grayscale")}>
+                            {/* AM Routine */}
+                            <div className="bg-orange-500/5 border border-orange-500/20 rounded-xl p-4">
+                                <div className="flex items-center gap-2 mb-3 text-orange-300">
+                                    <Sun className="w-5 h-5" />
+                                    <span className="font-bold">Morning (AM)</span>
+                                </div>
+                                <div className="space-y-2">
+                                    {runChronoSplit(selectedIngredients).am.length > 0 ? (
+                                        runChronoSplit(selectedIngredients).am.map(id => (
+                                            <div key={id} className="text-sm bg-orange-500/10 px-3 py-1.5 rounded-lg border border-orange-500/10 text-orange-100 flex items-center justify-between">
+                                                <span>{getIngredientName(id)}</span>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-xs text-neutral-500 italic">No AM actives selected</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* PM Routine */}
+                            <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-xl p-4">
+                                <div className="flex items-center gap-2 mb-3 text-indigo-300">
+                                    <Moon className="w-5 h-5" />
+                                    <span className="font-bold">Evening (PM)</span>
+                                </div>
+                                <div className="space-y-2">
+                                    {runChronoSplit(selectedIngredients).pm.length > 0 ? (
+                                        runChronoSplit(selectedIngredients).pm.map(id => (
+                                            <div key={id} className="text-sm bg-indigo-500/10 px-3 py-1.5 rounded-lg border border-indigo-500/10 text-indigo-100 flex items-center justify-between">
+                                                <span>{getIngredientName(id)}</span>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-xs text-neutral-500 italic">No PM actives selected</p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Lock Overlay */}
+                        {!isPremium && (
+                            <div className="absolute inset-0 z-20 flex items-center justify-center">
+                                <div className="bg-black/80 backdrop-blur-md border border-white/10 p-6 rounded-2xl text-center shadow-2xl">
+                                    <Lock className="w-8 h-8 text-amber-500 mx-auto mb-3" />
+                                    <h4 className="text-lg font-bold text-white mb-1">Premium Feature</h4>
+                                    <p className="text-sm text-neutral-400 mb-4 max-w-[200px] mx-auto">
+                                        Unlock the Chrono-Splitter to optimize your AM/PM routine.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
-                    {isSignedIn ? (
-                        <button
-                            onClick={async () => {
-                                try {
-                                    const res = await fetch('/api/checkout', { method: 'POST' });
+                    <div className="mt-8 pt-6 border-t border-white/5 z-10">
+                        <div className="flex justify-between items-center text-xl font-bold text-white mt-1">
+                            <span>Total</span>
+                            <span className="text-white">$45.00</span>
+                        </div>
 
-                                    if (!res.ok) {
-                                        const errData = await res.json();
-                                        throw new Error(errData.error || "Checkout request failed");
+                        {isSignedIn ? (
+                            <button
+                                onClick={async () => {
+                                    try {
+                                        const res = await fetch('/api/checkout', { method: 'POST' });
+
+                                        if (!res.ok) {
+                                            const errData = await res.json();
+                                            throw new Error(errData.error || "Checkout request failed");
+                                        }
+
+                                        const data = await res.json();
+                                        if (data.url) window.location.href = data.url;
+                                    } catch (e: any) {
+                                        alert(`Checkout Error: ${e.message}`);
                                     }
-
-                                    const data = await res.json();
-                                    if (data.url) window.location.href = data.url;
-                                } catch (e: any) {
-                                    alert(`Checkout Error: ${e.message}`);
-                                }
-                            }}
-                            className={cn("w-full mt-4 py-3 font-bold rounded-xl transition-all flex items-center justify-center gap-2 relative overflow-hidden group bg-white hover:bg-neutral-200 text-black shadow-[0_0_20px_rgba(255,255,255,0.2)]")}
-                        >
-                            <span>Purchase Premium Audit</span>
-                        </button>
-                    ) : (
-                        <SignInButton mode="modal">
-                            <button className="w-full mt-4 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-500 transition-colors flex items-center justify-center gap-2">
-                                <Lock className="w-4 h-4" />
-                                <span>Sign In to Save</span>
+                                }}
+                                className={cn("w-full mt-4 py-3 font-bold rounded-xl transition-all flex items-center justify-center gap-2 relative overflow-hidden group bg-white hover:bg-neutral-200 text-black shadow-[0_0_20px_rgba(255,255,255,0.2)]")}
+                            >
+                                <span>Purchase Premium Audit</span>
                             </button>
-                        </SignInButton>
-                    )}
+                        ) : (
+                            <SignInButton mode="modal">
+                                <button className="w-full mt-4 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-500 transition-colors flex items-center justify-center gap-2">
+                                    <Lock className="w-4 h-4" />
+                                    <span>Sign In to Save</span>
+                                </button>
+                            </SignInButton>
+                        )}
+                    </div>
                 </div>
-            </div>
 
-        </div>
+            </div>
         </div >
     );
 }
