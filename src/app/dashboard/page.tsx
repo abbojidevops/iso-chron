@@ -573,7 +573,7 @@ function DashboardContent() {
                 </div>
             </div>
             {/* AI Assistant */}
-            <AIChat context={`Score: ${finalScore}, Risk: ${status}, Actives: ${selectedIngredients.length}`} />
+            <AIChat context={`Score: ${finalScore}, Risk: ${status}, Actives: ${ingredients.filter(i => selectedIngredients.includes(i.id)).map(i => i.name).join(', ')}`} />
 
         </div>
     );
