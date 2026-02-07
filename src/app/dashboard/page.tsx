@@ -2,7 +2,7 @@
 
 import { useState, Suspense, useEffect } from "react";
 import { UserButton, SignInButton, SignedIn, SignedOut, useSession, useUser } from "@clerk/nextjs";
-import { INGREDIENTS } from "@/lib/ingredients";
+import { INGREDIENTS, Ingredient } from "@/lib/ingredients";
 import { runMolecularAudit } from "@/lib/conflict-engine"; // New Engine
 import { runChronoSplit, getIngredientName } from "@/lib/chrono-splitter"; // Chrono Logic
 import { getLocalUVIndex, isSunSafe } from "@/lib/uv-api"; // UV Logic
@@ -25,10 +25,30 @@ function DashboardContent() {
     const { isSignedIn, user } = useUser();
     const searchParams = useSearchParams();
 
+    const [ingredients, setIngredients] = useState<Ingredient[]>([]); // DB Ingredients
     const [selectedIngredients, setSelectedIngredients] = useState<string[]>([]);
     const [isPremium, setIsPremium] = useState(false);
     const [uvAlert, setUvAlert] = useState<string | null>(null);
     const [uvData, setUvData] = useState<number | null>(null);
+
+    // Fetch Ingredients on Mount
+    useEffect(() => {
+        const loadIngredients = async () => {
+            // Fallback to local until DB fetch succeeds
+            setIngredients(INGREDIENTS);
+
+            try {
+                const { fetchIngredients } = await import("@/lib/api");
+                const dbIngredients = await fetchIngredients();
+                if (dbIngredients.length > 0) {
+                    setIngredients(dbIngredients);
+                }
+            } catch (e) {
+                console.error("Failed to load ingredients from DB", e);
+            }
+        };
+        loadIngredients();
+    }, []);
 
     // Fetch UV Index on Mount
     useEffect(() => {
@@ -204,7 +224,7 @@ function DashboardContent() {
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                        {INGREDIENTS.map((ing) => {
+                        {ingredients.map((ing) => {
                             const active = selectedIngredients.includes(ing.id);
                             return (
                                 <button
@@ -296,7 +316,7 @@ function DashboardContent() {
                                     className="relative w-full h-[400px] rounded-xl overflow-hidden mb-4 border border-white/10 shadow-inner"
                                 >
                                     <MolecularVisualizer
-                                        ingredients={INGREDIENTS.filter(i => selectedIngredients.includes(i.id))}
+                                        ingredients={ingredients.filter(i => selectedIngredients.includes(i.id))}
                                         conflicts={conflicts}
                                         status={status}
                                     />
