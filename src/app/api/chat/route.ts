@@ -30,6 +30,32 @@ export async function POST(req: Request) {
             }
         }
 
+        // 2. Score & Reasoning Logic ("why", "score", "low", "bad")
+        else if (has(["why", "score", "rating", "evaluate", "assess"])) {
+            responseText = `📊 **Score Analysis: ${score}/100**\n\n`;
+            if (score === 100) {
+                responseText += "Perfection. Your routine is optimally balanced with no conflicting actives.";
+            } else if (score >= 80) {
+                responseText += "High Score. You have a solid routine. Minor deductions may be due to the sheer number of actives, but no conflicts.";
+            } else if (score >= 50) {
+                responseText += "Moderate Score. Your routine has potential irritants. If you have sensitive skin, consider cycling your actives (Skin Cycling).";
+            } else {
+                responseText += "Low Score. Major conflicts detected (e.g., Mixing Acids + Retinol). This will damage your moisture barrier. Please remove conflicting items.";
+            }
+        }
+
+        // 3. Improvement / Help Logic ("improve", "fix", "better", "help")
+        else if (has(["improve", "fix", "better", "help", "recommend"])) {
+            responseText = "💡 **Dr. ISO's Recommendations:**\n\n";
+            if (risk === "Hazardous") {
+                responseText += "1. **IMMEDIATE ACTION:** Stop using Retinol and Acids together.\n2. Use Retinol only at night.\n3. Use Acids (AHA/BHA) on alternate nights or mornings.";
+            } else if (risk === "Caution") {
+                responseText += "1. **Hydration First:** Add Hyaluronic Acid or a rich moisturizer to buffer these actives.\n2. **Patch Test:** Introduce new products slowly.";
+            } else {
+                responseText += "Your routine is already solid! To level up, ensure you are wearing SPF 50 daily to protect your results.";
+            }
+        }
+
         // 2. Analysis / Details Logic ("analyze", "details", "explain")
         else if (has(["analy", "detail", "explain", "review", "breakdown"])) {
             responseText = `🔬 **Molecular Analysis Report**\n\n`;
