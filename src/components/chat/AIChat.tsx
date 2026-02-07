@@ -35,20 +35,26 @@ export function AIChat({ context }: { context: string }) {
         setIsLoading(true);
 
         try {
-            // Mock API call for now - replace with real endpoint later
-            // const res = await fetch('/api/chat', { ... }); 
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    messages: [...messages, { role: 'user', content: userMsg }],
+                    context
+                })
+            });
 
-            // Simulating network delay and response
-            setTimeout(() => {
-                setMessages(prev => [...prev, {
-                    role: 'assistant',
-                    content: `I see you are asking about "${userMsg}". Based on your current selection (${context}), here is my advice... [AI Logic Placeholder]`
-                }]);
-                setIsLoading(false);
-            }, 1000);
+            const data = await res.json();
+
+            setMessages(prev => [...prev, {
+                role: 'assistant',
+                content: data.message || "I'm having trouble connecting to the server."
+            }]);
 
         } catch (error) {
             console.error(error);
+            setMessages(prev => [...prev, { role: 'assistant', content: "Network error. Please try again." }]);
+        } finally {
             setIsLoading(false);
         }
     };

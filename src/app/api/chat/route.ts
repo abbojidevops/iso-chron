@@ -3,12 +3,50 @@ import { NextResponse } from 'next/server';
 export async function POST(req: Request) {
     try {
         const { messages, context } = await req.json();
+        const lastUserMessage = messages[messages.length - 1].content.toLowerCase();
 
-        // TODO: Integrate with OpenAI/Anthropic/Gemini API here
-        // For now, return a smart mock response based on the context (ingredients/score)
+        // Parse Context
+        // specialized regex to extract score and risk from "Score: 100, Risk: Optimal, Actives: 0"
+        const scoreMatch = context.match(/Score: (\d+)/);
+        const riskMatch = context.match(/Risk: (\w+)/);
+
+        const score = scoreMatch ? parseInt(scoreMatch[1]) : 0;
+        const risk = riskMatch ? riskMatch[1] : "Unknown";
+
+        let responseText = "";
+
+        // 1. Safety Check Logic
+        if (lastUserMessage.includes("safe") || lastUserMessage.includes("risk") || lastUserMessage.includes("bad")) {
+            if (risk === "Hazardous") {
+                responseText = "⚠️ I detected a conflict in your routine. You are likely mixing strong actives like Retinol and AHAs/BHAs. This can damage your skin barrier. I recommend splitting them into AM/PM routines.";
+            } else if (risk === "Caution") {
+                responseText = "Your routine is generally okay, but be careful. You have multiple actives that might cause irritation if used daily. improving hydration is key.";
+            } else {
+                responseText = "✅ Your routine looks completely safe! The synergy between your selected ingredients is optimal.";
+            }
+        }
+
+        // 2. Ingredient Specific Advice
+        else if (lastUserMessage.includes("retinol")) {
+            responseText = "Retinol is the gold standard for anti-aging. Always use it at night 🌙 and wear SPF the next morning, as it makes your skin sun-sensitive.";
+        }
+        else if (lastUserMessage.includes("vitamin c")) {
+            responseText = "Vitamin C is a powerful antioxidant 🍊. It works best in the morning to boost the efficacy of your sunscreen.";
+        }
+        else if (lastUserMessage.includes("acid") || lastUserMessage.includes("aha") || lastUserMessage.includes("bha")) {
+            responseText = "Exfoliating acids (AHAs/BHAs) reveal brighter skin but can be drying. Limit use to 2-3 times a week and never mix directly with Retinol.";
+        }
+        else if (lastUserMessage.includes("hi") || lastUserMessage.includes("hello")) {
+            responseText = `Hello! I see your current routine has a Safety Score of ${score}/100. How can I help you optimize it?`;
+        }
+
+        // 3. Fallback
+        else {
+            responseText = `I'm analyzing your routine (Score: ${score}). While I'm still in training, I suggest focusing on the "Conflict" tab to see specific interaction warnings.`;
+        }
 
         return NextResponse.json({
-            message: "I am currently running in simulation mode. Connect a real LLM API key to enable full analysis!"
+            message: responseText
         });
 
     } catch (error) {

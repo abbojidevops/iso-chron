@@ -7,12 +7,13 @@ import { runMolecularAudit } from "@/lib/conflict-engine"; // New Engine
 import { runChronoSplit, getIngredientName } from "@/lib/chrono-splitter"; // Chrono Logic
 import { getLocalUVIndex, isSunSafe } from "@/lib/uv-api"; // UV Logic
 import { cn } from "@/lib/utils";
-import { AlertTriangle, X, FlaskConical, ShieldCheck, Lock, CheckCircle, Flame, Zap, Sun, Moon } from "lucide-react";
+import { AlertTriangle, X, FlaskConical, ShieldCheck, Lock, CheckCircle, Flame, Zap, Sun, Moon, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@supabase/supabase-js";
 import { MolecularVisualizer } from "@/components/canvas/MolecularVisualizer";
 import { OCRScanner } from "@/components/ocr/OCRScanner";
 import { AIChat } from "@/components/chat/AIChat";
+import { MolecularRoutine } from "@/lib/types";
 
 import { useSearchParams } from "next/navigation";
 declare global {
@@ -113,7 +114,7 @@ function DashboardContent() {
     }, [user, searchParams]);
 
     // History State
-    const [history, setHistory] = useState<any[]>([]);
+    const [history, setHistory] = useState<MolecularRoutine[]>([]);
 
     const fetchHistory = async () => {
         if (!user) return;
@@ -128,13 +129,14 @@ function DashboardContent() {
                 { global: { headers: { Authorization: `Bearer ${token}` } } }
             );
 
+            // Fetch from new 'routines' table
             const { data } = await supabase
-                .from('user_products')
+                .from('routines')
                 .select('*')
                 .eq('user_id', user.id)
                 .order('created_at', { ascending: false });
 
-            if (data) setHistory(data);
+            if (data) setHistory(data as MolecularRoutine[]);
         } catch (e) {
             console.error("History fetch error:", e);
         }
@@ -172,35 +174,24 @@ function DashboardContent() {
                 throw new Error("Missing Supabase JWT Template in Clerk.");
             }
 
-            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-            const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-            const supabase = createClient(supabaseUrl, supabaseKey, {
-                global: { headers: { Authorization: `Bearer ${token}` } },
-            });
-
-            const { error } = await supabase.from('user_products').insert({
-                user_id: user.id,
-                product_name: `Routine Analysis - ${new Date().toLocaleTimeString()}`,
-                ingredient_ids: selectedIngredients,
-                score: finalScore,
+            // Use Server Action
+            const { saveMolecularRoutine } = await import("@/actions/save-routine");
+            const result = await saveMolecularRoutine(token, {
+                ingredients: selectedIngredients,
+                safetyScore: finalScore,
                 status: status
             });
+
+            if (!result.success) throw new Error(result.error);
+
+            alert("Routine saved successfully to your Skin Dossier!");
 
             // Refresh history after save
             await fetchHistory();
 
-            if (error) throw error;
-
-            alert("Routine saved successfully to your Skin Dossier!");
-
         } catch (e) {
             console.error(e);
-            const msg = (e as Error).message;
-            if (msg.includes("JWT")) {
-                alert("Setup Required: Please add the 'supabase' JWT Template in your Clerk Dashboard.");
-            } else {
-                alert("Error saving routine: " + msg);
-            }
+            alert("Error saving routine: " + (e as Error).message);
         } finally {
             setSaving(false);
         }
@@ -216,7 +207,7 @@ function DashboardContent() {
 
                 <div className="flex items-center gap-4">
                     <div className="hidden md:block bg-gradient-to-r from-blue-600/20 to-purple-600/20 text-blue-300 px-4 py-1.5 rounded-full text-xs font-mono border border-blue-500/30">
-                        ISO-CHRON v1.0
+                        ISO-CHRON v2.0
                     </div>
 
                     <div className="h-8 w-[1px] bg-white/10 mx-2 hidden md:block"></div>
@@ -299,6 +290,7 @@ function DashboardContent() {
                         {status === 'Optimal' && <CheckCircle className="w-5 h-5 text-green-400" />}
                         {status === 'Hazardous' && <Flame className="w-5 h-5 text-red-500 animate-pulse" />}
                         {status === 'Caution' && <AlertTriangle className="w-5 h-5 text-amber-500" />}
+                        {status === 'Pending' && <FlaskConical className="w-5 h-5 text-neutral-500" />}
                     </h2>
 
                     {/* Safety Score Bar */}
@@ -486,24 +478,23 @@ function DashboardContent() {
 
                         {isSignedIn ? (
                             <button
-                                onClick={async () => {
-                                    try {
-                                        const res = await fetch('/api/checkout', { method: 'POST' });
-
-                                        if (!res.ok) {
-                                            const errData = await res.json();
-                                            throw new Error(errData.error || "Checkout request failed");
-                                        }
-
-                                        const data = await res.json();
-                                        if (data.url) window.location.href = data.url;
-                                    } catch (e: any) {
-                                        alert(`Checkout Error: ${e.message}`);
-                                    }
-                                }}
-                                className={cn("w-full mt-4 py-3 font-bold rounded-xl transition-all flex items-center justify-center gap-2 relative overflow-hidden group bg-white hover:bg-neutral-200 text-black shadow-[0_0_20px_rgba(255,255,255,0.2)]")}
+                                onClick={saving ? undefined : handleSave} // Use Handle Save
+                                disabled={saving}
+                                className={cn("w-full mt-4 py-3 font-bold rounded-xl transition-all flex items-center justify-center gap-2 relative overflow-hidden group",
+                                    saving ? "bg-white/20 cursor-wait" : "bg-white hover:bg-neutral-200 text-black shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+                                )}
                             >
-                                <span>Purchase Premium Audit</span>
+                                {saving ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        <span>Saving Dossier...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <ShieldCheck className="w-4 h-4" />
+                                        <span>Save Molecular Routine</span>
+                                    </>
+                                )}
                             </button>
                         ) : (
                             <SignInButton mode="modal">
@@ -513,6 +504,23 @@ function DashboardContent() {
                                 </button>
                             </SignInButton>
                         )}
+
+                        {/* Premium Checkout Button (Below Save) */}
+                        <button
+                            onClick={async () => {
+                                try {
+                                    const res = await fetch('/api/checkout', { method: 'POST' });
+                                    if (!res.ok) throw new Error("Checkout failed");
+                                    const data = await res.json();
+                                    if (data.url) window.location.href = data.url;
+                                } catch (e: any) {
+                                    alert(`Error: ${e.message}`);
+                                }
+                            }}
+                            className="w-full mt-3 py-3 text-xs uppercase tracking-wider font-medium text-neutral-500 hover:text-white transition-colors"
+                        >
+                            or Purchase Premium Audit
+                        </button>
                     </div>
                 </div>
 
@@ -539,19 +547,19 @@ function DashboardContent() {
                         history.map((record) => (
                             <div key={record.id} className="p-4 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between group hover:bg-white/10 transition-colors">
                                 <div>
-                                    <div className="font-medium text-white">{record.product_name}</div>
+                                    <div className="font-medium text-white">{record.routine_name}</div>
                                     <div className="text-xs text-neutral-400 font-mono">
-                                        {new Date(record.created_at).toLocaleDateString()} • {record.ingredient_ids?.length || 0} actives
+                                        {new Date(record.created_at).toLocaleDateString()} • {record.ingredients.length || 0} actives
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-4">
-                                    {record.score !== undefined && record.score !== null ? (
+                                    {record.safety_score !== undefined && record.safety_score !== null ? (
                                         <div className={cn("px-3 py-1 rounded-full text-xs font-bold font-mono border",
-                                            record.score > 70 ? "bg-green-500/20 text-green-400 border-green-500/30" :
-                                                record.score > 40 ? "bg-amber-500/20 text-amber-400 border-amber-500/30" :
+                                            record.safety_score > 70 ? "bg-green-500/20 text-green-400 border-green-500/30" :
+                                                record.safety_score > 40 ? "bg-amber-500/20 text-amber-400 border-amber-500/30" :
                                                     "bg-red-500/20 text-red-400 border-red-500/30"
                                         )}>
-                                            SCORE: {record.score}
+                                            SCORE: {record.safety_score}
                                         </div>
                                     ) : (
                                         <div className="px-3 py-1 rounded-full text-xs font-bold font-mono border bg-neutral-500/20 text-neutral-400 border-neutral-500/30">
