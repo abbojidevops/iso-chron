@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { AlertTriangle, X, FlaskConical, ShieldCheck, Lock, CheckCircle, Flame, Zap, Sun, Moon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@supabase/supabase-js";
-import { MolecularSandbox } from "@/components/canvas/MolecularSandbox";
+import { MolecularVisualizer } from "@/components/canvas/MolecularVisualizer";
 
 import { useSearchParams } from "next/navigation";
 declare global {
@@ -291,11 +291,12 @@ function DashboardContent() {
                             {selectedIngredients.length > 0 && (
                                 <motion.div
                                     initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                                    className="relative w-full h-64 rounded-xl overflow-hidden mb-4 border border-white/10 shadow-inner"
+                                    className="relative w-full h-[400px] rounded-xl overflow-hidden mb-4 border border-white/10 shadow-inner"
                                 >
-                                    <MolecularSandbox
+                                    <MolecularVisualizer
                                         ingredients={INGREDIENTS.filter(i => selectedIngredients.includes(i.id))}
                                         conflicts={conflicts}
+                                        status={status}
                                     />
                                     {/* Overlay Gradient */}
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
