@@ -1,180 +1,215 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { useMemo, useRef } from "react";
+import { Canvas, useFrame, extend, ReactThreeFiber } from "@react-three/fiber";
 import {
     Text,
-    Sphere,
     Float,
-    Environment,
-    MeshTransmissionMaterial,
     OrbitControls,
-    Trail,
-    Line
+    ContactShadows,
+    shaderMaterial
 } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import * as THREE from "three";
 import { Ingredient } from "@/lib/ingredients";
 import { ConflictResult } from "@/lib/conflict-engine";
 
-// --- Sub-Components ---
+// --- Custom Shader Material ---
+
+const AuraShaderMaterial = shaderMaterial(
+    {
+        uTime: 0,
+        uColor: new THREE.Color(0.2, 0.5, 1.0),
+        uIntensity: 1.0,
+        uDeform: 0.0 // 0 = Safe, 1 = Hazardous
+    },
+    // Vertex Shader
+    `
+    uniform float uTime;
+    uniform float uDeform;
+    varying vec2 vUv;
+    varying float vDisplacement;
+
+    // Simplex 3D Noise function (simplified)
+    vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+    vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+    vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
+    vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+    float snoise(vec3 v) {
+        const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+        const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+        vec3 i  = floor(v + dot(v, C.yyy) );
+        vec3 x0 = v - i + dot(i, C.xxx) ;
+        vec3 g = step(x0.yzx, x0.xyz);
+        vec3 l = 1.0 - g;
+        vec3 i1 = min( g.xyz, l.zxy );
+        vec3 i2 = max( g.xyz, l.zxy );
+        vec3 x1 = x0 - i1 + C.xxx;
+        vec3 x2 = x0 - i2 + C.yyy;
+        vec3 x3 = x0 - D.yyy;
+        i = mod289(i);
+        vec4 p = permute( permute( permute( 
+                  i.z + vec4(0.0, i1.z, i2.z, 1.0 ))
+                + i.y + vec4(0.0, i1.y, i2.y, 1.0 )) 
+                + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));
+        float n_ = 0.142857142857;
+        vec3  ns = n_ * D.wyz - D.xzx;
+        vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+        vec4 x_ = floor(j * ns.z);
+        vec4 y_ = floor(j - 7.0 * x_ );
+        vec4 x = x_ *ns.x + ns.yyyy;
+        vec4 y = y_ *ns.x + ns.yyyy;
+        vec4 h = 1.0 - abs(x) - abs(y);
+        vec4 b0 = vec4( x.xy, y.xy );
+        vec4 b1 = vec4( x.zw, y.zw );
+        vec4 s0 = floor(b0)*2.0 + 1.0;
+        vec4 s1 = floor(b1)*2.0 + 1.0;
+        vec4 sh = -step(h, vec4(0.0));
+        vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy ;
+        vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww ;
+        vec3 p0 = vec3(a0.xy,h.x);
+        vec3 p1 = vec3(a0.zw,h.y);
+        vec3 p2 = vec3(a1.xy,h.z);
+        vec3 p3 = vec3(a1.zw,h.w);
+        vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
+        p0 *= norm.x;
+        p1 *= norm.y;
+        p2 *= norm.z;
+        p3 *= norm.w;
+        vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+        m = m * m;
+        return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3) ) );
+    }
+
+    void main() {
+        vUv = uv;
+        
+        // Turbulence logic
+        float noise = snoise(position * 2.0 + uTime * (1.0 + uDeform * 5.0)); // Faster when Hazardous
+        
+        // Deform vertices based on noise and uDeform intensity
+        vec3 newPosition = position + normal * noise * (0.1 + uDeform * 0.4);
+        
+        vDisplacement = noise;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
+    }
+    `,
+    // Fragment Shader
+    `
+    uniform float uTime;
+    uniform vec3 uColor;
+    uniform float uIntensity;
+    uniform float uDeform;
+    varying vec2 vUv;
+    varying float vDisplacement;
+
+    void main() {
+        // Organic pulse
+        float pulse = sin(uTime * 2.0) * 0.1 + 0.9;
+        
+        // Enhance color at peaks of displacement
+        vec3 color = uColor * pulse;
+        color += vec3(vDisplacement * 0.5); // Add highlights
+        
+        // Add "Hazard" glitch veins
+        if (uDeform > 0.5) {
+            float vein = step(0.8, sin(vUv.y * 50.0 + uTime * 10.0));
+            color += vec3(1.0, 0.0, 0.0) * vein * 0.5;
+        }
+
+        gl_FragColor = vec4(color * uIntensity, 1.0);
+    }
+    `
+);
+
+// Register shader for R3F
+extend({ AuraShaderMaterial });
+
+declare global {
+    namespace JSX {
+        interface IntrinsicElements {
+            auraShaderMaterial: ReactThreeFiber.Object3DNode<THREE.ShaderMaterial, typeof AuraShaderMaterial>;
+        }
+    }
+}
 
 function AuraSphere({ status }: { status: string }) {
     const mesh = useRef<THREE.Mesh>(null);
+    const materialRef = useRef<THREE.ShaderMaterial>(null);
 
-    useFrame((state, delta) => {
-        if (mesh.current) {
-            mesh.current.rotation.y += delta * 0.2;
-            mesh.current.rotation.z += delta * 0.1;
+    // Determine visuals based on status
+    const targetColor = useMemo(() => {
+        if (status === 'Hazardous') return new THREE.Color('#ff0000');
+        if (status === 'Caution') return new THREE.Color('#f59e0b');
+        return new THREE.Color('#3b82f6');
+    }, [status]);
+
+    useFrame((state) => {
+        if (materialRef.current) {
+            materialRef.current.uniforms.uTime.value = state.clock.elapsedTime;
+
+            // Smoothly transition deform intensity
+            const targetDeform = status === 'Hazardous' ? 1.0 : 0.0;
+            materialRef.current.uniforms.uDeform.value = THREE.MathUtils.lerp(
+                materialRef.current.uniforms.uDeform.value,
+                targetDeform,
+                0.05
+            );
+
+            // Smoothly transition color
+            materialRef.current.uniforms.uColor.value.lerp(targetColor, 0.05);
+
+            // Pulse intensity for Hazard
+            materialRef.current.uniforms.uIntensity.value = status === 'Hazardous' ? 2.5 : 1.5;
         }
     });
 
-    const glowColor = status === 'Hazardous' ? '#ff0000' :
-        status === 'Caution' ? '#f59e0b' : '#3b82f6';
-
     return (
-        <group>
-            {/* Core */}
-            <Sphere args={[1.2, 64, 64]} ref={mesh}>
-                <MeshTransmissionMaterial
-                    backside
-                    thickness={0.5}
-                    roughness={0.1}
-                    transmission={0.95}
-                    ior={1.5}
-                    chromaticAberration={0.1} // Premium glass look
-                    anisotropy={0.5}
-                    distortion={0.2}
-                    distortionScale={0.5}
-                    temporalDistortion={0.2}
-                    color={glowColor}
-                    toneMapped={false}
-                />
-            </Sphere>
-
-            {/* Inner Glow Light */}
-            <pointLight position={[0, 0, 0]} intensity={2} color={glowColor} distance={5} />
-        </group>
+        <mesh ref={mesh} args={[1.5, 128, 128]}> {/* High polys for deformation */}
+            <icosahedronGeometry args={[1.2, 50]} /> {/* Clean geometry for noise */}
+            <auraShaderMaterial
+                ref={materialRef}
+                transparent
+                side={THREE.DoubleSide}
+            />
+        </mesh>
     );
 }
 
 function SatelliteMolecule({
     position,
     color,
-    label,
-    isNew
+    label
 }: {
     position: THREE.Vector3;
     color: string;
-    label: string;
-    isNew: boolean
+    label: string
 }) {
     return (
-        <Float speed={2} rotationIntensity={1} floatIntensity={1}>
+        <Float speed={4} rotationIntensity={2} floatIntensity={1}>
             <group position={position}>
-                <Trail width={0.2} length={4} color={color} attenuation={(t) => t * t}>
-                    <Sphere args={[0.4, 32, 32]}>
-                        <meshPhysicalMaterial
-                            color={color}
-                            roughness={0.2}
-                            metalness={0.8}
-                            emissive={color}
-                            emissiveIntensity={0.5}
-                            clearcoat={1}
-                        />
-                    </Sphere>
-                </Trail>
-
+                <mesh>
+                    <sphereGeometry args={[0.3, 32, 32]} />
+                    <meshStandardMaterial
+                        color={color}
+                        emissive={color}
+                        emissiveIntensity={0.8}
+                        roughness={0.1}
+                    />
+                </mesh>
                 <Text
-                    position={[0, 0.6, 0]}
-                    fontSize={0.2}
+                    position={[0, 0.5, 0]}
+                    fontSize={0.15}
                     color="white"
                     anchorX="center"
                     anchorY="middle"
-                    outlineWidth={0.02}
-                    outlineColor="black"
                 >
                     {label}
                 </Text>
-
-                {/* New Element scan effect */}
-                {isNew && (
-                    <mesh rotation={[Math.PI / 2, 0, 0]}>
-                        <ringGeometry args={[0.5, 0.55, 32]} />
-                        <meshBasicMaterial color="white" transparent opacity={0.5} />
-                    </mesh>
-                )}
             </group>
         </Float>
     );
 }
-
-function DynamicBond({
-    start,
-    end,
-    status
-}: {
-    start: THREE.Vector3;
-    end: THREE.Vector3;
-    status: string
-}) {
-    const ref = useRef<THREE.Mesh>(null);
-    const curve = useMemo(() => new THREE.LineCurve3(start, end), [start, end]);
-
-    useFrame((state) => {
-        if (status === 'Hazardous' && ref.current) {
-            // Vibrate effect
-            ref.current.position.x += (Math.random() - 0.5) * 0.05;
-            ref.current.position.y += (Math.random() - 0.5) * 0.05;
-        }
-    });
-
-    const color = status === 'Hazardous' ? '#ff0000' :
-        status === 'Caution' ? '#f59e0b' : '#3b82f6';
-
-    // Calculate visualization of bond (cylinder or tube)
-    // For simplicity, using a thin cylinder connecting the two points
-    // Math to orient cylinder is complex, sticking to simple Line for MVP stability 
-    // or using Drei's Line component which handles orientation.
-    // Let's use a specialized TubeGeometry or Drei Line.
-
-    return (
-        <group>
-            {/* Using a simple visual line for now, or could use @react-three/drei Line */}
-            {/* A "laser" beam */}
-        </group>
-    );
-}
-
-function LaserScan({ active }: { active: boolean }) {
-    const group = useRef<THREE.Group>(null);
-
-    useFrame((state, delta) => {
-        if (active && group.current) {
-            group.current.position.y -= delta * 3;
-            if (group.current.position.y < -3) {
-                group.current.position.y = 3;
-            }
-        }
-    });
-
-    if (!active) return null;
-
-    return (
-        <group ref={group} position={[0, 3, 0]}>
-            <mesh rotation={[Math.PI / 2, 0, 0]}>
-                <planeGeometry args={[10, 10]} />
-                <meshBasicMaterial color="#00ffcc" transparent opacity={0.05} side={THREE.DoubleSide} />
-            </mesh>
-            <mesh rotation={[Math.PI / 2, 0, 0]}>
-                <ringGeometry args={[2, 2.1, 64]} />
-                <meshBasicMaterial color="#00ffcc" transparent opacity={0.8} />
-            </mesh>
-        </group>
-    );
-}
-
-// --- Main Component ---
 
 export function MolecularVisualizer({
     ingredients,
@@ -185,86 +220,75 @@ export function MolecularVisualizer({
     conflicts: ConflictResult[];
     status: string;
 }) {
-    // Generate positions in a circle around the center
     const satellites = useMemo(() => {
         return ingredients.map((ing, i) => {
             const angle = (i / ingredients.length) * Math.PI * 2;
-            const radius = 2.5;
+            const radius = 3;
             return {
                 ...ing,
                 position: new THREE.Vector3(
                     Math.cos(angle) * radius,
-                    Math.sin(angle) * radius * 0.5, // Flattened slightly
+                    Math.sin(angle) * radius * 0.3,
                     Math.sin(angle) * radius
                 ),
                 color: ing.category === 'Active' ? '#3b82f6' :
-                    ing.category === 'Acid' ? '#ec4899' :
-                        ing.category === 'Vitamin' ? '#f59e0b' : '#10b981'
+                    ing.category === 'Acid' ? '#ec4899' : '#10b981'
             };
         });
     }, [ingredients]);
 
     return (
-        <div className="w-full h-full min-h-[400px] rounded-xl overflow-hidden bg-black/40 relative">
-            <Canvas camera={{ position: [0, 0, 6], fov: 45 }}>
-                <color attach="background" args={['#050510']} />
+        <div className="w-full h-full min-h-[400px] rounded-xl overflow-hidden bg-black/60 relative border border-white/10">
+            <Canvas camera={{ position: [0, 0, 7], fov: 40 }} shadows>
+                <color attach="background" args={['#020205']} />
 
-                {/* Lighting */}
+                {/* 1. Studio Lighting using Environment (No Stage needed if manually tuned) */}
                 <ambientLight intensity={0.2} />
-                <pointLight position={[10, 10, 10]} intensity={1} />
-                <spotLight position={[-10, -10, -10]} intensity={0.5} color="blue" />
-                <Environment preset="city" />
+                <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} castShadow />
 
-                {/* Central Aura */}
+                {/* 2. Custom Shader Sphere */}
                 <AuraSphere status={status} />
 
-                {/* Satellites */}
-                {satellites.map((sat, i) => (
-                    <group key={sat.id}>
-                        <SatelliteMolecule
-                            position={sat.position}
-                            color={sat.color}
-                            label={sat.name.split(' ')[0]}
-                            isNew={true} // Simplify for now
-                        />
-                        {/* Bonds to Center */}
-                        <Line
-                            points={[new THREE.Vector3(0, 0, 0), sat.position]}
-                            color={
-                                status === 'Hazardous' ? 'red' :
-                                    status === 'Caution' ? 'orange' : '#3b82f6'
-                            }
-                            lineWidth={status === 'Hazardous' ? 2 : 1}
-                            transparent
-                            opacity={0.3}
-                        />
-                    </group>
+                {/* 3. Satellites */}
+                {satellites.map((sat) => (
+                    <SatelliteMolecule
+                        key={sat.id}
+                        position={sat.position}
+                        color={sat.color}
+                        label={sat.name}
+                    />
                 ))}
 
-                {/* Laser Scan Effect - Triggers on change ideally, staying always on for "Monitoring" look */}
-                <LaserScan active={true} />
+                {/* 4. Contact Shadows for grounding */}
+                <ContactShadows
+                    position={[0, -2, 0]}
+                    opacity={0.5}
+                    scale={10}
+                    blur={2.5}
+                    far={4}
+                    color={status === 'Hazardous' ? 'red' : 'blue'}
+                />
 
-                <OrbitControls enableZoom={false} autoRotate autoRotateSpeed={0.5} />
+                <OrbitControls enableZoom={false} enablePan={false} />
 
-                {/* VFX */}
-                <EffectComposer>
+                {/* 5. Post Processing: Bloom */}
+                <EffectComposer disableNormalPass>
                     <Bloom
-                        luminanceThreshold={0.5}
-                        luminanceSmoothing={0.9}
-                        height={300}
-                        intensity={status === 'Hazardous' ? 2.0 : 0.5}
+                        luminanceThreshold={0.2}
+                        mipmapBlur
+                        intensity={status === 'Hazardous' ? 3.0 : 1.5}
+                        radius={0.5}
                     />
                 </EffectComposer>
-
             </Canvas>
 
             {/* HUD Overlay */}
-            <div className="absolute top-4 left-4 font-mono text-xs text-white/40 pointer-events-none">
+            <div className="absolute top-4 left-4 font-mono text-xs text-white/50 pointer-events-none">
                 <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${status === 'Hazardous' ? 'bg-red-500 animate-ping' : 'bg-green-500'}`} />
-                    SYSTEM MONITORED
+                    <div className={`w-2 h-2 rounded-full ${status === 'Hazardous' ? 'bg-red-500 animate-ping' : 'bg-blue-500'}`} />
+                    GLSL SHADER: ACTIVE
                 </div>
-                <div>MOLECULES: {ingredients.length}</div>
+                {status === 'Hazardous' && <div className="text-red-500 font-bold mt-1">CRITICAL INSTABILITY</div>}
             </div>
         </div>
     );
