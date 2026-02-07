@@ -128,7 +128,7 @@ extend({ AuraShaderMaterial });
 declare global {
     namespace JSX {
         interface IntrinsicElements {
-            auraShaderMaterial: ReactThreeFiber.Object3DNode<THREE.ShaderMaterial, typeof AuraShaderMaterial>;
+            auraShaderMaterial: any;
         }
     }
 }
