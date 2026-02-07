@@ -23,8 +23,6 @@ export async function POST(req: Request) {
             appUrl = origin;
         } else if (host) {
             appUrl = `${protocol}://${host}`;
-        } else if (process.env.VERCEL_URL) {
-            appUrl = `https://${process.env.VERCEL_URL}`;
         } else {
             appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
         }
