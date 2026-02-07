@@ -5,7 +5,7 @@ import { auth } from '@clerk/nextjs/server'
 import { revalidatePath } from 'next/cache'
 
 export async function deleteRoutine(routineId: string) {
-    const { userId, getToken } = auth();
+    const { userId, getToken } = await auth();
 
     if (!userId) return { success: false, error: "Unauthorized" };
 

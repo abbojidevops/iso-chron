@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { FlaskConical } from 'lucide-react';
 
 export default async function Dashboard() {
-    const { userId, getToken } = auth();
+    const { userId, getToken } = await auth();
 
     if (!userId) {
         return <div className="min-h-screen bg-[#0B0B0B] text-white p-8 flex items-center justify-center">Please Sign In</div>;
