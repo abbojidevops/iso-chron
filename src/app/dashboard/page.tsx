@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { AlertTriangle, X, FlaskConical, ShieldCheck, Lock, CheckCircle, Flame, Zap, Sun, Moon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@supabase/supabase-js";
+import { MolecularSandbox } from "@/components/canvas/MolecularSandbox";
 
 import { useSearchParams } from "next/navigation";
 declare global {
@@ -256,6 +257,20 @@ function DashboardContent() {
                                 </motion.div>
                             )}
 
+                            {selectedIngredients.length > 0 && (
+                                <motion.div
+                                    initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                                    className="relative w-full h-64 rounded-xl overflow-hidden mb-4 border border-white/10 shadow-inner"
+                                >
+                                    <MolecularSandbox
+                                        ingredients={INGREDIENTS.filter(i => selectedIngredients.includes(i.id))}
+                                        conflicts={conflicts}
+                                    />
+                                    {/* Overlay Gradient */}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
+                                </motion.div>
+                            )}
+
                             {conflicts.map((conflict, i) => (
                                 <motion.div
                                     key={i}
@@ -263,7 +278,7 @@ function DashboardContent() {
                                     animate={{ opacity: 1, x: 0 }}
                                     exit={{ opacity: 0, x: -20 }}
                                     transition={{ delay: i * 0.1 }}
-                                    className={cn("p-4 rounded-xl border relative overflow-hidden",
+                                    className={cn("p-4 rounded-xl border relative overflow-hidden group hover:bg-white/5 transition-colors",
                                         conflict.severity === 'Critical' ? "bg-red-950/40 border-red-500/50" :
                                             conflict.severity === 'High' ? "bg-red-900/20 border-red-500/30" :
                                                 "bg-amber-900/10 border-amber-500/30"
@@ -279,6 +294,9 @@ function DashboardContent() {
                                     <p className="text-sm text-white/90 leading-relaxed font-light">
                                         {conflict.message}
                                     </p>
+
+                                    {/* Scanline Effect */}
+                                    <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 animate-scanline" />
                                 </motion.div>
                             ))}
                         </AnimatePresence>

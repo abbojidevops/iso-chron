@@ -10,7 +10,7 @@ export const runMolecularAudit = (selectedIngredients: string[]) => {
     const activeConflicts: ConflictResult[] = [];
 
     // Mapping based on the compounds in your Bio-Audit UI
-    // Using snake_case IDs to match src/lib/ingredients.ts
+    // IDs must match src/lib/ingredients.ts
     const pairings = [
         {
             ids: ['retinol', 'vitamin_c'],
@@ -39,13 +39,17 @@ export const runMolecularAudit = (selectedIngredients: string[]) => {
             type: 'Acid Overload',
             impact: 40,
             msg: 'Double Exfoliation: Combining AHAs and BHAs can lead to severe dryness and irritation.'
+        },
+        {
+            ids: ['vitamin_c', 'aha'],
+            severity: 'High',
+            type: 'Oxidation Risk',
+            impact: 30,
+            msg: 'AHAs can destabilize Vitamin C, reducing its antioxidant potency.'
         }
     ];
 
     pairings.forEach(rule => {
-        // Check if *all* ingredients in the rule are present in the user's selection
-        // Note: The user's UI sends IDs like 'Retinol', 'Vitamin C'. 
-        // We need to ensure the IDs match exactly what's in the INGREDIENTS list.
         if (rule.ids.every(id => selectedIngredients.includes(id))) {
             activeConflicts.push({
                 severity: rule.severity as any,
@@ -57,9 +61,12 @@ export const runMolecularAudit = (selectedIngredients: string[]) => {
         }
     });
 
+    // Clamp score at 0
+    const finalScore = Math.max(safetyScore, 0);
+
     return {
-        finalScore: Math.max(safetyScore, 0),
+        finalScore,
         conflicts: activeConflicts,
-        status: safetyScore > 70 ? 'Optimal' : safetyScore > 40 ? 'Caution' : 'Hazardous'
+        status: finalScore > 70 ? 'Optimal' : finalScore > 40 ? 'Caution' : 'Hazardous'
     };
 };
