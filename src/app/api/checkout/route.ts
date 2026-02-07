@@ -11,12 +11,24 @@ export async function POST(req: Request) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
-        // Get App URL dynamically from request origin
+        // Get App URL dynamically from request headers
+        // Priority: Origin -> Host -> Env Var -> Localhost
         const origin = req.headers.get("origin");
-        let appUrl = origin || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+        const host = req.headers.get("host"); // e.g. "iso-chron.vercel.app"
+        const protocol = req.headers.get("x-forwarded-proto") || "https";
+
+        let appUrl = "";
+
+        if (origin) {
+            appUrl = origin;
+        } else if (host) {
+            appUrl = `${protocol}://${host}`;
+        } else {
+            appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+        }
 
         // Ensure scheme
-        if (!appUrl.startsWith("http")) {
+        if (appUrl && !appUrl.startsWith("http")) {
             appUrl = `https://${appUrl}`;
         }
 
