@@ -346,7 +346,7 @@ export function MolecularVisualizer({
 
                 <OrbitControls enableZoom={false} enablePan={false} />
 
-                <EffectComposer disableNormalPass>
+                <EffectComposer>
                     <Bloom
                         luminanceThreshold={0.2}
                         mipmapBlur
