@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { UserButton, SignInButton, SignedIn, SignedOut, useSession, useUser } from "@clerk/nextjs";
 import { INGREDIENTS } from "@/lib/ingredients";
 import { runMolecularAudit } from "@/lib/conflict-engine"; // New Engine
@@ -11,14 +11,60 @@ import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@supabase/supabase-js";
 
 import { useSearchParams } from "next/navigation";
+declare global {
+    interface Window {
+        Clerk?: any;
+    }
+}
 
 function DashboardContent() {
     const { session } = useSession();
     const { isSignedIn, user } = useUser();
     const searchParams = useSearchParams();
-    const isPremium = searchParams.get('success') === 'true'; // Basic gating for demo
+    // const isPremium = searchParams.get('success') === 'true'; // MOVED TO STATE
 
     const [selectedIngredients, setSelectedIngredients] = useState<string[]>([]);
+    const [isPremium, setIsPremium] = useState(false);
+
+    // Check Premium Status on Mount
+    useEffect(() => {
+        const checkPremium = async () => {
+            if (!user) return;
+
+            // 1. Check URL query param (Optimistic UI for immediate feedback after redirect)
+            if (searchParams.get('success') === 'true') {
+                setIsPremium(true);
+            }
+
+            // 2. Check Database (Persistent Source of Truth)
+            try {
+                const session = await window.Clerk?.session;
+                const token = await session?.getToken({ template: 'supabase' });
+
+                if (!token) return;
+
+                const supabase = createClient(
+                    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+                    { global: { headers: { Authorization: `Bearer ${token}` } } }
+                );
+
+                const { data } = await supabase
+                    .from('profiles')
+                    .select('is_premium')
+                    .eq('user_id', user.id)
+                    .single();
+
+                if (data?.is_premium) {
+                    setIsPremium(true);
+                }
+            } catch (err) {
+                console.error("Error checking premium status:", err);
+            }
+        };
+
+        checkPremium();
+    }, [user, searchParams]);
 
     // Derived state from the new engine
     const { finalScore, conflicts, status } = runMolecularAudit(selectedIngredients);
