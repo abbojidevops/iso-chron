@@ -9,7 +9,8 @@ import {
     Environment,
     MeshTransmissionMaterial,
     OrbitControls,
-    Trail
+    Trail,
+    Line
 } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import * as THREE from "three";
