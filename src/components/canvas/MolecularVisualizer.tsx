@@ -296,6 +296,26 @@ export function MolecularVisualizer({
         return ingredients.map((ing, i) => {
             const angle = (i / ingredients.length) * Math.PI * 2;
             const radius = 3;
+
+            // Color mapping for new categories
+            const getCategoryColor = (category: string) => {
+                switch (category) {
+                    case 'Retinoid':
+                    case 'Exfoliant':
+                        return '#ec4899'; // Pink for actives/acids
+                    case 'Antioxidant':
+                    case 'Brightener':
+                        return '#3b82f6'; // Blue for antioxidants
+                    case 'Peptide':
+                        return '#a855f7'; // Purple for peptides
+                    case 'Barrier':
+                    case 'Hydrator':
+                        return '#10b981'; // Green for support
+                    default:
+                        return '#6b7280'; // Gray for others
+                }
+            };
+
             return {
                 ...ing,
                 position: new THREE.Vector3(
@@ -303,8 +323,7 @@ export function MolecularVisualizer({
                     Math.sin(angle) * radius * 0.3,
                     Math.sin(angle) * radius
                 ),
-                color: ing.category === 'Active' ? '#3b82f6' :
-                    ing.category === 'Acid' ? '#ec4899' : '#10b981'
+                color: getCategoryColor(ing.category)
             };
         });
     }, [ingredients]);

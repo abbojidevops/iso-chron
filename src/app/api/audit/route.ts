@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { checkConflicts, INGREDIENTS } from '@/lib/ingredients';
+import { runMolecularAudit } from '@/lib/conflict-engine';
 
 export async function POST(request: Request) {
     try {
@@ -10,10 +10,12 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Invalid ingredients list' }, { status: 400 });
         }
 
-        const conflicts = checkConflicts(ingredients);
+        const auditResult = runMolecularAudit(ingredients);
 
         return NextResponse.json({
-            conflicts,
+            conflicts: auditResult.conflicts,
+            safetyScore: auditResult.finalScore,
+            status: auditResult.status,
             analyzed_at: new Date().toISOString(),
             chemical_signature: "ISO-CHRON-VALIDATED"
         });
