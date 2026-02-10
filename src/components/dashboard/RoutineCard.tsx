@@ -4,6 +4,7 @@ import { Trash2, RefreshCcw, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { deleteRoutine } from '@/actions/delete-routine';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import Link from 'next/link';
 
 export default function RoutineCard({ routine }: { routine: MolecularRoutine }) {
     const isHazardous = routine.status === 'Hazardous';
@@ -49,9 +50,12 @@ export default function RoutineCard({ routine }: { routine: MolecularRoutine }) 
             </div>
 
             <div className="flex gap-2 border-t border-white/5 pt-4 mt-auto opacity-0 group-hover:opacity-100 transition-opacity">
-                <button className="flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold hover:bg-white/5 rounded-lg transition-all text-white/70 hover:text-white">
+                <Link
+                    href={`/dashboard/new?re-scan=${routine.ingredients.join(',')}`}
+                    className="flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold hover:bg-white/5 rounded-lg transition-all text-white/70 hover:text-white"
+                >
                     <RefreshCcw size={14} /> RE-SCAN
-                </button>
+                </Link>
                 <button
                     onClick={handleDelete}
                     disabled={isDeleting}

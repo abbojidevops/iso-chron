@@ -85,6 +85,16 @@ function DashboardContent() {
                 setIsPremium(true);
             }
 
+            // Check for Re-Scan
+            const reScanIngredients = searchParams.get('re-scan');
+            if (reScanIngredients) {
+                // Split by comma
+                const rawIds = reScanIngredients.split(',');
+                // Filter to ensure they exist in our DB (optional but good for safety)
+                // Just force set them for now to ensure they show up
+                setSelectedIngredients(rawIds);
+            }
+
             // 2. Check Database (Persistent Source of Truth)
             try {
                 const session = await window.Clerk?.session;

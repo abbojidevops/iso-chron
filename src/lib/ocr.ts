@@ -12,12 +12,54 @@ const normalize = (text: string) => text.toLowerCase().replace(/[^a-z0-9 ]/g, ' 
 
 // List of aliases to help matching (can be expanded)
 const ALIASES: Record<string, string[]> = {
-    'retinol': ['retinyl', 'retinoic', 'vitamin a'],
-    'vitamin_c': ['ascorbic acid', 'l-ascorbic', 'magnesium ascorbyl phosphate', 'tetrahexyldecyl ascorbate'],
-    'aha': ['glycolic acid', 'lactic acid', 'mandelic acid', 'citric acid'],
-    'bha': ['salicylic acid', 'betaine salicylate', 'willow bark'],
+    // Retinoids
+    'tretinoin': ['retin-a', 'atralin', 'renova', 'tretin'],
+    'adapalene': ['differin', 'epiduo'],
+    'retinol': ['retinyl palmitate', 'retinyl acetate', 'retinyl linoleate', 'pure retinol'],
+    'retinaldehyde': ['retinal', 'retin-aldehyde'],
+    'bakuchiol': ['babchi', 'psoralea corylifolia'],
+
+    // Acids
+    'glycolic_acid': ['hydroxyacetic acid'],
+    'lactic_acid': ['lactate', 'milk acid'],
+    'salicylic_acid': ['beta hydroxy acid', 'willow bark', 'betaine salicylate'],
+    'pha': ['gluconolactone', 'lactobionic acid', 'galactose'],
+    'azelaic_acid': ['azelaic', 'finacea', 'azelex'],
+
+    // Antioxidants
+    'ascorbic_acid': ['l-ascorbic', 'pure vitamin c'],
+    'vitamin_c_derivative': ['sodium ascorbyl phosphate', 'magnesium ascorbyl phosphate', 'tetrahexyldecyl ascorbate', 'thd ascorbate', 'ethylated ascorbic acid', 'sap', 'map'],
+    'ferulic_acid': ['ferulic'],
+    'vitamin_e': ['tocopherol', 'tocopheryl acetate'],
+    'resveratrol': ['grape seed extract', 'polygonum cuspidatum'],
     'niacinamide': ['nicotinamide', 'vitamin b3'],
-    'benzoyl_peroxide': ['benzoyl']
+    'green_tea': ['camellia sinensis', 'green tea polyphenols', 'egcg'],
+
+    // Peptides
+    'copper_peptides': ['ghk-cu', 'copper tripeptide-1', 'copper tripeptide'],
+    'matrixyl': ['palmitoyl pentapeptide-4', 'palmitoyl tetrapeptide-7', 'palmitoyl tripeptide-1', 'matrixyl 3000'],
+    'argireline': ['acetyl hexapeptide-8', 'acetyl hexapeptide-3'],
+    'egf': ['sh-oligopeptide-1', 'epidermal growth factor', 'rh-oligopeptide-1'],
+
+    // Barrier / Hydration
+    'ceramides': ['ceramide np', 'ceramide ap', 'ceramide eop', 'phytosphingosine'],
+    'panthenol': ['provitamin b5', 'd-panthenol'],
+    'centella': ['cica', 'centella asiatica', 'madecassoside', 'asiaticoside', 'tiger grass'],
+    'hyaluronic_acid': ['sodium hyaluronate', 'hydrolyzed hyaluronic acid', 'ha'],
+    'snail_mucin': ['snail secretion filtrate'],
+    'polyglutamic_acid': ['pga'],
+
+    // Brighteners
+    'alpha_arbutin': ['arbutin'],
+    'kojic_acid': ['kojic'],
+    'tranexamic_acid': ['txa', 'trans-4-aminomethyl-cyclohexanecarboxylic acid'], // lol
+    'licorice_root': ['glycyrrhiza glabra', 'dipotassium glycyrrhizate'],
+    'hydroquinone': ['1,4-benzenediol'],
+
+    // Others
+    'benzoyl_peroxide': ['bpo'],
+    'spf_mineral': ['zinc oxide', 'titanium dioxide'],
+    'spf_chemical': ['avobenzone', 'octinoxate', 'oxybenzone', 'homosalate', 'octisalate', 'octocrylene']
 };
 
 export async function scanImage(imageFile: File | string): Promise<ScanResult> {
@@ -46,8 +88,12 @@ export async function scanImage(imageFile: File | string): Promise<ScanResult> {
             }
         });
 
+        // Filter duplicates just in case
+        const uniqueFound = Array.from(new Set(found.map(f => f.id)))
+            .map(id => INGREDIENTS.find(i => i.id === id)!);
+
         return {
-            foundIngredients: found,
+            foundIngredients: uniqueFound,
             rawText: ret.data.text,
             confidence: ret.data.confidence
         };

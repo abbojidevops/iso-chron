@@ -1,72 +1,137 @@
+import { INGREDIENTS, isCategory } from './ingredients';
+
 export type ConflictResult = {
-    severity: 'Low' | 'Medium' | 'High' | 'Critical';
+    severity: 'Low' | 'Medium' | 'High' | 'Critical' | 'Synergy';
     type: string;
     message: string;
-    scoreImpact: number;
+    scoreImpact: number; // Negative for conflicts, Positive for synergy
 };
 
 export const runMolecularAudit = (selectedIngredients: string[]) => {
     let safetyScore = 100;
     const activeConflicts: ConflictResult[] = [];
 
-    // Mapping based on the compounds in your Bio-Audit UI
-    // IDs must match src/lib/ingredients.ts
-    const pairings = [
-        {
-            ids: ['retinol', 'vitamin_c'],
-            severity: 'High',
-            type: 'Molecular Instability',
-            impact: 30,
-            msg: 'pH Imbalance: Vit-C (low pH) and Retinol (high pH) neutralize each other.'
-        },
-        {
-            ids: ['retinol', 'aha'],
-            severity: 'Critical',
-            type: 'Barrier Compromise',
-            impact: 50,
-            msg: 'Over-exfoliation: High risk of chronic inflammation and peeling.'
-        },
-        {
-            ids: ['benzoyl_peroxide', 'retinol'],
-            severity: 'Medium',
-            type: 'Oxidation Alert',
-            impact: 20,
-            msg: 'Oxidative Stress: BPO can deactivate Retinol molecules upon contact.'
-        },
-        {
-            ids: ['aha', 'bha'],
-            severity: 'High',
-            type: 'Acid Overload',
-            impact: 40,
-            msg: 'Double Exfoliation: Combining AHAs and BHAs can lead to severe dryness and irritation.'
-        },
-        {
-            ids: ['vitamin_c', 'aha'],
-            severity: 'High',
-            type: 'Oxidation Risk',
-            impact: 30,
-            msg: 'AHAs can destabilize Vitamin C, reducing its antioxidant potency.'
-        }
-    ];
+    // Helper to check if ID or Category exists in selection
+    const has = (id: string) => selectedIngredients.includes(id);
+    const hasCat = (cat: string) => selectedIngredients.some(id => isCategory(id, cat as any));
+    const countCat = (cat: string) => selectedIngredients.filter(id => isCategory(id, cat as any)).length;
 
-    pairings.forEach(rule => {
-        if (rule.ids.every(id => selectedIngredients.includes(id))) {
-            activeConflicts.push({
-                severity: rule.severity as any,
-                type: rule.type,
-                message: rule.msg,
-                scoreImpact: rule.impact
-            });
-            safetyScore -= rule.impact;
-        }
+    // --- 1. FATAL CONFLICTS (Critical) ---
+
+    // Copper Peptides + Strong Acids/Vit C
+    if (has('copper_peptides') && (hasCat('Exfoliant') || has('ascorbic_acid'))) {
+        activeConflicts.push({
+            severity: 'Critical',
+            type: 'Destabilization',
+            message: 'Copper Peptides are highly unstable. Mixing with Acids or L-Ascorbic Acid can break the peptide bonds and cause pro-oxidant damage.',
+            scoreImpact: -40
+        });
+    }
+
+    // Benzoyl Peroxide + Retinoids (except Adapalene)
+    if (has('benzoyl_peroxide') && hasCat('Retinoid') && !has('adapalene')) {
+        activeConflicts.push({
+            severity: 'High',
+            type: 'Oxidation Alert',
+            message: 'Benzoyl Peroxide generates oxygen which can degrade most Retinoids (Tretinoin/Retinol) instantly. Adapalene is the only stable exception.',
+            scoreImpact: -30
+        });
+    }
+
+    // Retinoid + Retinoid (Redundancy/Irritation)
+    if (countCat('Retinoid') > 1) {
+        activeConflicts.push({
+            severity: 'High',
+            type: 'Retinoid Overload',
+            message: 'Using multiple Retinoids (e.g., Retinol + Tretinoin) increases irritation risk with NO added benefit. Choose one.',
+            scoreImpact: -25
+        });
+    }
+
+    // --- 2. HIGH RISK CONFLICTS ---
+
+    // Exfoliant + Retinoid
+    if (hasCat('Exfoliant') && hasCat('Retinoid')) {
+        activeConflicts.push({
+            severity: 'High',
+            type: 'Barrier Risk',
+            message: 'Combining Acids (AHA/BHA) with Retinoids significantly increases risk of barrier damage and sensitivity. Alternate nights.',
+            scoreImpact: -20
+        });
+    }
+
+    // Vitamin C (Ascorbic) + Niacinamide (Debunked but still potential flush)
+    // Note: Modern research says this is mostly fine, but high heat can cause flushing. Low impact.
+    if (has('ascorbic_acid') && has('niacinamide')) {
+        activeConflicts.push({
+            severity: 'Low',
+            type: 'Sensitivity Check',
+            message: 'Mixing pure L-Ascorbic Acid with Niacinamide may cause temporary flushing (redness) in sensitive skin.',
+            scoreImpact: -5
+        });
+    }
+
+    // --- 3. REDUNDANCY CHECKS ---
+
+    if (countCat('Exfoliant') > 2) {
+        activeConflicts.push({
+            severity: 'Medium',
+            type: 'Over-Exfoliation',
+            message: 'You have selected more than 2 exfoliants. Be very careful to avoid stripping your moisture barrier.',
+            scoreImpact: -15
+        });
+    }
+
+    // --- 4. SYNERGY BONUSES (Positive Score) ---
+
+    // Vitamin C + Vit E + Ferulic (The Golden Trio)
+    if (has('ascorbic_acid') && has('vitamin_e') && has('ferulic_acid')) {
+        activeConflicts.push({
+            severity: 'Synergy',
+            type: 'Golden Trio',
+            message: 'Perfect Synergy! Vitamin E and Ferulic Acid stabilize Vitamin C and double its photoprotection capacity.',
+            scoreImpact: 15
+        });
+    }
+
+    // Retinoid + Niacinamide
+    else if (hasCat('Retinoid') && has('niacinamide')) {
+        activeConflicts.push({
+            severity: 'Synergy',
+            type: 'Tolerance Boost',
+            message: 'Niacinamide stimulates ceramides, helping your skin tolerate Retinoids better with less irritation.',
+            scoreImpact: 10
+        });
+    }
+
+    // Hyaluronic Acid + Occlusive/Barrier
+    if (has('hyaluronic_acid') && !hasCat('Barrier') && !hasCat('Retinoid') && !hasCat('Exfoliant')) {
+        // Warning if HA is used without sealant?
+        activeConflicts.push({
+            severity: 'Low',
+            type: 'Hydration Loss',
+            message: 'Hyaluronic Acid needs a sealant (Moisturizer/Occlusive) to prevent water loss (TEWL) in dry environments.',
+            scoreImpact: -5
+        });
+    }
+
+    // --- SCORING CALCULATION ---
+
+    activeConflicts.forEach(c => {
+        // Impact can be positive or negative
+        safetyScore += c.scoreImpact;
     });
 
-    // Clamp score at 0
-    const finalScore = Math.max(safetyScore, 0);
+    // Clamp score 0-100
+    const finalScore = Math.min(Math.max(safetyScore, 0), 100);
+
+    let status: 'Optimal' | 'Caution' | 'Hazardous' = 'Optimal';
+    if (finalScore <= 40) status = 'Hazardous';
+    else if (finalScore <= 75) status = 'Caution';
 
     return {
         finalScore,
         conflicts: activeConflicts,
-        status: finalScore > 70 ? 'Optimal' : finalScore > 40 ? 'Caution' : 'Hazardous'
+        status
     };
 };

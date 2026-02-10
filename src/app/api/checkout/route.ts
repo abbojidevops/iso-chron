@@ -14,8 +14,11 @@ export async function POST(req: Request) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
+        // Parse request body for planType
+        const body = await req.json();
+        const planType = body.planType || 'full'; // Default to 'full'
+
         // Get App URL dynamically from request headers
-        // Best practice: Use Host header for Vercel
         const origin = req.headers.get("origin");
         const host = req.headers.get("host");
         const protocol = req.headers.get("x-forwarded-proto") || "https";
@@ -30,10 +33,28 @@ export async function POST(req: Request) {
             appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
         }
 
-        // Ensure scheme (redundant but safe)
+        // Ensure scheme
         if (appUrl && !appUrl.startsWith("http")) {
             appUrl = `https://${appUrl}`;
         }
+
+        // Define pricing tiers
+        const pricingConfig = {
+            full: {
+                name: 'Full Molecular Audit',
+                description: 'Professional chemical conflict analysis and routine optimization.',
+                amount: 4500, // $45.00
+                mode: 'payment' as const
+            },
+            monthly: {
+                name: 'ISO-CHRON Monthly Sync',
+                description: 'Unlimited audits + priority support.',
+                amount: 999, // $9.99/month
+                mode: 'subscription' as const
+            }
+        };
+
+        const config = pricingConfig[planType as keyof typeof pricingConfig] || pricingConfig.full;
 
         // Create a Checkout Session
         const session = await stripe.checkout.sessions.create({
@@ -43,19 +64,23 @@ export async function POST(req: Request) {
                     price_data: {
                         currency: "usd",
                         product_data: {
-                            name: "ISO-CHRON Premium Audit",
-                            description: "Unlock advanced chemical analysis, UV-index correlation, and routine timeline optimization.",
+                            name: config.name,
+                            description: config.description,
                         },
-                        unit_amount: 4500, // $45.00
+                        unit_amount: config.amount,
+                        ...(config.mode === 'subscription' && {
+                            recurring: { interval: 'month' }
+                        })
                     },
                     quantity: 1,
                 },
             ],
-            mode: "payment",
+            mode: config.mode,
             success_url: `${appUrl}/dashboard?success=true`,
             cancel_url: `${appUrl}/dashboard?canceled=true`,
             metadata: {
                 userId: userId,
+                planType: planType
             },
         });
 
