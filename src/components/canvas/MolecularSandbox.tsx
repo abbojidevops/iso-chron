@@ -108,9 +108,25 @@ export function MolecularSandbox({
                 (Math.random() - 0.5) * 0.5
             ),
             // Dynamic color based on category
-            color: ing.category === 'Active' ? '#3b82f6' :
-                ing.category === 'Acid' ? '#ec4899' :
-                    ing.category === 'Vitamin' ? '#f59e0b' : '#10b981'
+            color: (() => {
+                switch (ing.category) {
+                    case 'Retinoid':
+                    case 'Exfoliant':
+                        return '#ec4899'; // Pink
+                    case 'Antioxidant':
+                    case 'Brightener':
+                        return '#3b82f6'; // Blue
+                    case 'Peptide':
+                        return '#a855f7'; // Purple
+                    case 'Barrier':
+                    case 'Hydrator':
+                        return '#10b981'; // Green
+                    case 'Antibacterial':
+                        return '#f59e0b'; // Amber
+                    default:
+                        return '#6b7280'; // Gray
+                }
+            })()
         }));
     }, [ingredients]); // Re-run when selection changes
 
