@@ -17,7 +17,10 @@ export default function PricingPage() {
                 body: JSON.stringify({ planType }),
             });
 
-            if (!res.ok) throw new Error('Checkout failed');
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error || 'Checkout failed');
+            }
 
             const { url } = await res.json();
             if (url) window.location.href = url;

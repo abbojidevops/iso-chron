@@ -176,10 +176,10 @@ function HybridCore({ status }: { status: string }) {
             <mesh scale={1.0}>
                 <sphereGeometry args={[1.3, 64, 64]} />
                 <MeshTransmissionMaterial
-                    backside
+                    backside={false}
                     thickness={0.2}
                     roughness={0.1}
-                    transmission={0.9}
+                    transmission={0.99}
                     ior={1.5}
                     chromaticAberration={0.1}
                     anisotropy={0.1}

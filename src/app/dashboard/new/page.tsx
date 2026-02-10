@@ -523,7 +523,10 @@ function DashboardContent() {
                             onClick={async () => {
                                 try {
                                     const res = await fetch('/api/checkout', { method: 'POST' });
-                                    if (!res.ok) throw new Error("Checkout failed");
+                                    if (!res.ok) {
+                                        const errData = await res.json();
+                                        throw new Error(errData.error || 'Checkout failed');
+                                    }
                                     const data = await res.json();
                                     if (data.url) window.location.href = data.url;
                                 } catch (e: any) {
