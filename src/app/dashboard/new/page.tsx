@@ -304,7 +304,6 @@ function DashboardContent() {
                         {status === 'Optimal' && <CheckCircle className="w-5 h-5 text-green-400" />}
                         {status === 'Hazardous' && <Flame className="w-5 h-5 text-red-500 animate-pulse" />}
                         {status === 'Caution' && <AlertTriangle className="w-5 h-5 text-amber-500" />}
-                        {status === 'Pending' && <FlaskConical className="w-5 h-5 text-neutral-500" />}
                     </h2>
 
                     {/* Safety Score Bar */}
