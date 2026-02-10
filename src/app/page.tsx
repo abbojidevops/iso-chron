@@ -4,6 +4,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
+import { ThreeErrorBoundary } from "@/components/ThreeErrorBoundary";
 
 const SerumBottle = dynamic(() => import("@/components/canvas/SerumBottle"), { ssr: false });
 
@@ -53,7 +54,9 @@ export default function Home() {
 
       <div className="absolute inset-0 z-0 opacity-80 pointer-events-none lg:pointer-events-auto">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full max-w-[800px] max-h-[800px]">
-          <SerumBottle />
+          <ThreeErrorBoundary>
+            <SerumBottle />
+          </ThreeErrorBoundary>
         </div>
       </div>
 
