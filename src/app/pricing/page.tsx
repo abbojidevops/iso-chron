@@ -18,8 +18,13 @@ export default function PricingPage() {
             });
 
             if (!res.ok) {
-                const errData = await res.json();
-                throw new Error(errData.error || 'Checkout failed');
+                const text = await res.text();
+                try {
+                    const errData = JSON.parse(text);
+                    throw new Error(errData.error || `Error ${res.status}: ${text}`);
+                } catch (e) {
+                    throw new Error(`Checkout failed (${res.status}): ${text.substring(0, 100)}`);
+                }
             }
 
             const { url } = await res.json();

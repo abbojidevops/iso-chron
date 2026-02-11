@@ -524,8 +524,13 @@ function DashboardContent() {
                                 try {
                                     const res = await fetch('/api/checkout', { method: 'POST' });
                                     if (!res.ok) {
-                                        const errData = await res.json();
-                                        throw new Error(errData.error || 'Checkout failed');
+                                        const text = await res.text();
+                                        try {
+                                            const errData = JSON.parse(text);
+                                            throw new Error(errData.error || `Error ${res.status}: ${text}`);
+                                        } catch (e) {
+                                            throw new Error(`Checkout failed (${res.status}): ${text.substring(0, 100)}`);
+                                        }
                                     }
                                     const data = await res.json();
                                     if (data.url) window.location.href = data.url;

@@ -14,6 +14,11 @@ export async function POST(req: Request) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
+        if (!process.env.STRIPE_SECRET_KEY) {
+            console.error("CRITICAL: STRIPE_SECRET_KEY is missing in environment variables.");
+            return NextResponse.json({ error: "Server Error: Stripe Secret Key is missing. Please add it to Vercel Env Vars." }, { status: 500 });
+        }
+
         // Parse request body for planType
         const body = await req.json();
         const planType = body.planType || 'full'; // Default to 'full'
