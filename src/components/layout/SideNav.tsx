@@ -7,7 +7,8 @@ import { FlaskConical, History, ShieldAlert, Calendar, Settings, LogOut, Menu, X
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SignOutButton } from "@clerk/nextjs";
-import { HowItWorksModal } from "@/components/ui/HowItWorksModal";
+import { HelpCircle } from "lucide-react";
+
 
 
 const navItems = [
@@ -81,7 +82,12 @@ export function SideNav() {
 
                 {/* Footer / User */}
                 <div className="p-4 border-t border-white/5 space-y-2">
-                    <HowItWorksModal />
+                    <Link href="/how-it-works">
+                        <button className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-neutral-400 rounded-xl hover:bg-white/5 hover:text-white transition-all w-full text-left">
+                            <HelpCircle className="w-5 h-5" />
+                            <span>How it Works</span>
+                        </button>
+                    </Link>
 
                     <div className="px-4 py-3 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between">
                         <div className="flex items-center gap-2">
