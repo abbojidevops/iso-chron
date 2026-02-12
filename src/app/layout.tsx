@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     siteName: "ISO-CHRON",
     images: [
       {
-        url: "/og-image.jpg", // We need to ensure this exists or use a placeholder
+        url: "/og-image.jpg",
         width: 1200,
         height: 630,
         alt: "ISO-CHRON Dashboard",
@@ -39,7 +39,12 @@ export const metadata: Metadata = {
     description: "Advanced conflict detection engine for skincare routines.",
     creator: "@isochron_lab",
   },
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
   themeColor: "#050505",
 };
 
