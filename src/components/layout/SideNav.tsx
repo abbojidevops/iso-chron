@@ -7,6 +7,8 @@ import { FlaskConical, History, ShieldAlert, Calendar, Settings, LogOut, Menu, X
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SignOutButton } from "@clerk/nextjs";
+import { HowItWorksModal } from "@/components/ui/HowItWorksModal";
+
 
 const navItems = [
     { name: "Molecular Vault", href: "/dashboard/new", icon: FlaskConical },
@@ -78,7 +80,9 @@ export function SideNav() {
                 </nav>
 
                 {/* Footer / User */}
-                <div className="p-4 border-t border-white/5">
+                <div className="p-4 border-t border-white/5 space-y-2">
+                    <HowItWorksModal />
+
                     <div className="px-4 py-3 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
