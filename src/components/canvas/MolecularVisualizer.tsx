@@ -134,7 +134,12 @@ declare module '@react-three/fiber' {
     }
 }
 
-function HybridCore({ status }: { status: string }) {
+interface HybridCoreProps {
+    status: string;
+    score: number;
+}
+
+function HybridCore({ status, score }: HybridCoreProps) {
     const mesh = useRef<THREE.Mesh>(null);
     const materialRef = useRef<THREE.ShaderMaterial>(null);
 
@@ -148,7 +153,11 @@ function HybridCore({ status }: { status: string }) {
         if (materialRef.current) {
             materialRef.current.uniforms.uTime.value = state.clock.elapsedTime;
 
-            const targetDeform = status === 'Hazardous' ? 1.0 : 0.0;
+            // Distortion based on Score (Inverse: Lower score = More deform)
+            // Score 100 -> 0.0
+            // Score 0 -> 1.0
+            const targetDeform = Math.max(0, (100 - score) / 100);
+
             materialRef.current.uniforms.uDeform.value = THREE.MathUtils.lerp(
                 materialRef.current.uniforms.uDeform.value,
                 targetDeform,
@@ -178,12 +187,12 @@ function HybridCore({ status }: { status: string }) {
                 <MeshTransmissionMaterial
                     backside={false}
                     thickness={0.2}
-                    roughness={0.1}
+                    roughness={0.1 + (100 - score) / 200} // Rougher when score is low
                     transmission={0.99}
                     ior={1.5}
-                    chromaticAberration={0.1}
+                    chromaticAberration={0.1 + (100 - score) / 100} // High aberration on low score
                     anisotropy={0.1}
-                    distortion={0.2}
+                    distortion={0.2 + (100 - score) / 100} // More glass distortion
                     distortionScale={0.3}
                     temporalDistortion={0.1}
                     background={new THREE.Color('#000000')}
@@ -192,6 +201,11 @@ function HybridCore({ status }: { status: string }) {
         </group>
     );
 }
+
+// ... Satellites and LaserScan ... (omitted from this replace for brevity if possible, but context needed)
+// Actually I need to replace HybridCore AND MolecularVisualizer.
+// Since they are far apart, I might use multi_replace or just replace HybridCore first.
+// Let's replace HybridCore first.
 
 function SatelliteMolecule({
     position,
@@ -275,11 +289,13 @@ function LaserScan({ active }: { active: boolean }) {
 export function MolecularVisualizer({
     ingredients,
     conflicts,
-    status
+    status,
+    score = 100 // Default to optimal
 }: {
     ingredients: Ingredient[];
     conflicts: ConflictResult[];
     status: string;
+    score?: number;
 }) {
     const [isScanning, setIsScanning] = useState(false);
 
@@ -291,6 +307,11 @@ export function MolecularVisualizer({
             return () => clearTimeout(timer);
         }
     }, [ingredients.length]);
+
+    // Calculate rotation speed based on score (Lower score = Faster spin)
+    // 100 -> 0.5
+    // 0 -> 4.0
+    const rotationSpeed = 0.5 + ((100 - score) / 100) * 3.5;
 
     const satellites = useMemo(() => {
         return ingredients.map((ing, i) => {
@@ -339,7 +360,7 @@ export function MolecularVisualizer({
                 <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} castShadow />
 
                 {/* Hybrid Core: Shader + Glass */}
-                <HybridCore status={status} />
+                <HybridCore status={status} score={score} />
 
                 {/* Satellites */}
                 {satellites.map((sat) => (
@@ -363,7 +384,12 @@ export function MolecularVisualizer({
                     color={status === 'Hazardous' ? 'red' : 'blue'}
                 />
 
-                <OrbitControls enableZoom={false} enablePan={false} />
+                <OrbitControls
+                    enableZoom={false}
+                    enablePan={false}
+                    autoRotate
+                    autoRotateSpeed={rotationSpeed}
+                />
 
                 <EffectComposer>
                     <Bloom
@@ -383,6 +409,7 @@ export function MolecularVisualizer({
                 </div>
                 {isScanning && <div className="text-cyan-400 font-bold mt-1 animate-pulse">ANALYZING COMPOUND...</div>}
                 {status === 'Hazardous' && <div className="text-red-500 font-bold mt-1">CRITICAL INSTABILITY</div>}
+                <div className="mt-1 opacity-50">SYNC: {score}%</div>
             </div>
         </div>
     );

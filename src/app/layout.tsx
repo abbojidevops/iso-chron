@@ -14,8 +14,33 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ISO-CHRON | Molecular Skincare Audit",
-  description: "Advanced skincare routine analysis and conflict detection.",
+  title: "ISO-CHRON | Molecular Skincare Analysis",
+  description: "Advanced conflict detection engine for skincare routines. Analyze ingredient interactions, optimize AM/PM schedules, and prevent chemical hazards.",
+  keywords: ["skincare", "ingredients", "conflict check", "retinol", "vitamin c", "routine builder", "dermatology", "molecular analysis"],
+  openGraph: {
+    title: "ISO-CHRON | Molecular Skincare Analysis",
+    description: "Advanced conflict detection engine for skincare routines.",
+    url: "https://iso-chron.vercel.app",
+    siteName: "ISO-CHRON",
+    images: [
+      {
+        url: "/og-image.jpg", // We need to ensure this exists or use a placeholder
+        width: 1200,
+        height: 630,
+        alt: "ISO-CHRON Dashboard",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ISO-CHRON | Molecular Skincare Analysis",
+    description: "Advanced conflict detection engine for skincare routines.",
+    creator: "@isochron_lab",
+  },
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
+  themeColor: "#050505",
 };
 
 export default function RootLayout({

@@ -29,31 +29,30 @@ export default async function Dashboard() {
     if (error) return <div className="text-white p-8">Error loading routines: {error.message}</div>;
 
     return (
-        <div className="min-h-screen bg-[#0B0B0B] text-white p-8 pb-20">
-            <header className="mb-12 flex justify-between items-center max-w-7xl mx-auto">
+        <div className="space-y-6">
+            <header className="flex items-center justify-between mb-8">
                 <div>
-                    <h1 className="text-4xl font-bold tracking-tighter italic flex items-center gap-3">
-                        <FlaskConical className="w-8 h-8 text-blue-500" />
-                        NEO-SHELF
-                    </h1>
-                    <p className="text-blue-500/60 font-mono text-sm uppercase tracking-widest mt-2">
-                        Your Molecular Archive
-                    </p>
+                    <h2 className="text-2xl font-bold text-white tracking-tight">Safety Reports</h2>
+                    <p className="text-neutral-400 text-sm">Review your past molecular audits and safety scores.</p>
                 </div>
+
                 <Link href="/dashboard/new">
-                    <button className="px-6 py-2 bg-blue-600 rounded-full text-sm font-bold hover:bg-blue-500 transition-all border border-blue-400/20 shadow-[0_0_20px_rgba(37,99,235,0.3)]">
-                        New Audit +
+                    <button className="px-4 py-2 bg-white text-black text-xs font-bold rounded-full hover:bg-neutral-200 transition-all flex items-center gap-2">
+                        <FlaskConical className="w-3 h-3" />
+                        New Analysis
                     </button>
                 </Link>
             </header>
 
-            <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {routines?.length === 0 ? (
-                    <div className="col-span-full text-center py-20 border border-white/10 rounded-3xl bg-white/5">
-                        <p className="text-neutral-500 mb-4">No molecular data archived.</p>
+                    <div className="col-span-full py-20 border border-dashed border-white/10 rounded-3xl bg-white/5 flex flex-col items-center justify-center text-center">
+                        <FlaskConical className="w-12 h-12 text-neutral-600 mb-4 opacity-50" />
+                        <h3 className="text-lg font-medium text-white mb-1">No Archives Found</h3>
+                        <p className="text-neutral-500 text-sm max-w-xs mb-6">Your molecular vault is empty. Initialize a scan to begin data collection.</p>
                         <Link href="/dashboard/new">
-                            <button className="text-blue-400 hover:text-blue-300 underline underline-offset-4">
-                                Initialize first scan
+                            <button className="text-blue-400 hover:text-blue-300 text-sm font-mono tracking-wider border-b border-blue-500/30 pb-0.5">
+                                INITIALIZE_SCAN
                             </button>
                         </Link>
                     </div>
