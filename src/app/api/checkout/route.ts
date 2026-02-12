@@ -23,24 +23,39 @@ export async function POST(req: Request) {
         const body = await req.json();
         const planType = body.planType || 'full'; // Default to 'full'
 
-        // Get App URL dynamically from request headers
-        const origin = req.headers.get("origin");
-        const host = req.headers.get("host");
-        const protocol = req.headers.get("x-forwarded-proto") || "https";
+        // Robust App URL Detection
+        let appUrl = process.env.NEXT_PUBLIC_APP_URL;
 
-        let appUrl = "";
-
-        if (origin) {
-            appUrl = origin;
-        } else if (host) {
-            appUrl = `${protocol}://${host}`;
-        } else {
-            appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+        if (!appUrl) {
+            // Fallback to Vercel System URL
+            appUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "";
         }
 
-        // Ensure scheme
-        if (appUrl && !appUrl.startsWith("http")) {
+        if (!appUrl) {
+            // Fallback to Request Headers
+            const origin = req.headers.get("origin");
+            const host = req.headers.get("host");
+            const protocol = req.headers.get("x-forwarded-proto") || "https";
+
+            if (origin && origin !== "null" && origin !== "undefined") {
+                appUrl = origin;
+            } else if (host) {
+                appUrl = `${protocol}://${host}`;
+            }
+        }
+
+        // Ultimate Fallback to prevent "undefined" error
+        if (!appUrl || appUrl === "undefined" || appUrl === "null") {
+            console.warn("URL Detection Failed. Using hardcoded production URL.");
+            appUrl = "https://iso-chron.vercel.app";
+        }
+
+        // Normalize URL (ensure scheme and remove trailing slash)
+        if (!appUrl.startsWith("http")) {
             appUrl = `https://${appUrl}`;
+        }
+        if (appUrl.endsWith("/")) {
+            appUrl = appUrl.slice(0, -1);
         }
 
         // Define pricing tiers
