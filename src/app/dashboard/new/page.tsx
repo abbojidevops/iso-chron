@@ -522,7 +522,11 @@ function DashboardContent() {
                         <button
                             onClick={async () => {
                                 try {
-                                    const res = await fetch('/api/checkout', { method: 'POST' });
+                                    const res = await fetch('/api/checkout', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ planType: 'full' })
+                                    });
                                     if (!res.ok) {
                                         const text = await res.text();
                                         try {
