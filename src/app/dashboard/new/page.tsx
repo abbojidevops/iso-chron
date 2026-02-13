@@ -261,26 +261,10 @@ function DashboardContent() {
     };
 
 
-    // Voice Handler
-    const handleVoiceCommand = (cmd: string) => {
-        if (cmd.includes("analyze") || cmd.includes("safety")) {
-            // Trigger audit visual (could scroll to meter)
-            alert("Running deep safety analysis...");
-        } else if (cmd.includes("generate") || cmd.includes("routine")) {
-            handleGenerateRoutine();
-        }
-    };
+    // Voice Handler moved to Layout/Global Context
+    const { setAiContext } = useDashboardAI();
 
-    const [aiContext, setAiContext] = useState<string>("");
-
-    import { useDashboardAI } from "@/context/DashboardAIContext";
-
-    // ... inside DashboardContent ...
-    const { setAiContext } = useDashboardAI(); // Use Global Context
-    // const [aiContext, setAiContext] = useState<string>(""); // Remove local
-
-    // ... inside handleGenerateRoutine ...
-    setAiContext(`Just generated a routine focused on ${generated.focus}. Rationale: ${generated.rationale.join(" ")}`);
+    // Generative AI Handler
 
     // ... inside return ...
     {/* Removed local VoiceCommand and AIChat - Now Global in Layout */ }
