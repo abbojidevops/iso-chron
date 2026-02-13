@@ -16,6 +16,8 @@ import { MolecularVisualizer } from "@/components/canvas/MolecularVisualizer";
 import { SensitizationMeter } from "@/components/dashboard/SensitizationMeter";
 import { OCRScanner } from "@/components/ocr/OCRScanner";
 import { AIChat } from "@/components/chat/AIChat";
+import { VoiceCommand } from "@/components/voice/VoiceCommand"; // Voice
+import { generateRoutine } from "@/lib/generative-engine"; // Gen AI
 
 // Lazy load removed
 // const SensitizationMeter = (await import("@/components/dashboard/SensitizationMeter")).SensitizationMeter;
@@ -257,6 +259,42 @@ function DashboardContent() {
         }
     };
 
+    import { VoiceCommand } from "@/components/voice/VoiceCommand"; // Voice
+    import { generateRoutine } from "@/lib/generative-engine"; // Gen AI
+
+    // Voice Handler
+    const handleVoiceCommand = (cmd: string) => {
+        if (cmd.includes("analyze") || cmd.includes("safety")) {
+            // Trigger audit visual (could scroll to meter)
+            alert("Running deep safety analysis...");
+        } else if (cmd.includes("generate") || cmd.includes("routine")) {
+            handleGenerateRoutine();
+        }
+    };
+
+    // Generative AI Handler
+    const handleGenerateRoutine = () => {
+        // Mock Profile for now (could come from DB)
+        const profile = {
+            skinType: 'Combination' as const,
+            concerns: ['Aging', 'Dehydration'] as any[],
+            phototype: phototype
+        };
+
+        const generated = generateRoutine(profile);
+
+        // Find IDs in our ingredient list to make them selectable
+        const allGeneratedIds = [...generated.morning, ...generated.evening];
+        // Filter out duplicates
+        const uniqueIds = Array.from(new Set(allGeneratedIds));
+
+        // Map to full ingredients to confirm they exist (in real app)
+        const validIds = uniqueIds.filter(id => INGREDIENTS.find(ing => ing.id === id));
+
+        setSelectedIngredients(validIds);
+        alert(`AI Generated Routine Focused on: ${generated.focus}`);
+    };
+
     // Lazy load removed -> Switched to static import
 
     return (
@@ -270,6 +308,15 @@ function DashboardContent() {
 
                 {/* User & Global Actions */}
                 <div className="flex items-center gap-4">
+                    {/* Gen AI Button */}
+                    <button
+                        onClick={handleGenerateRoutine}
+                        className="hidden md:flex items-center gap-2 px-4 py-1 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/50 rounded-full text-purple-400 text-xs transition-colors"
+                    >
+                        <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+                        AI GENERATE
+                    </button>
+
                     {/* Phototype Calibration */}
                     <select
                         className="bg-white/5 border border-white/10 rounded-full px-3 py-1 text-xs text-neutral-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -558,6 +605,8 @@ function DashboardContent() {
 
             {/* AI Assistant Floating */}
             <AIChat context={`Score: ${finalScore}, Status: ${status}`} />
+            {/* Voice Control */}
+            <VoiceCommand onCommand={handleVoiceCommand} />
         </div>
     );
 }
