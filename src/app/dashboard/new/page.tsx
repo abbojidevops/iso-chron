@@ -261,8 +261,6 @@ function DashboardContent() {
         }
     };
 
-    import { VoiceCommand } from "@/components/voice/VoiceCommand"; // Voice
-    import { generateRoutine } from "@/lib/generative-engine"; // Gen AI
 
     // Voice Handler
     const handleVoiceCommand = (cmd: string) => {
