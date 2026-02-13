@@ -620,13 +620,6 @@ export function MolecularVisualizer({
     );
 }
 
-
-interface HybridCoreProps {
-    status: string;
-    score: number;
-    stability?: { state: string; stabilityScore: number };
-}
-
 function HybridCore({ status, score, stability }: HybridCoreProps) {
     const mesh = useRef<THREE.Mesh>(null);
     const materialRef = useRef<THREE.ShaderMaterial>(null);
