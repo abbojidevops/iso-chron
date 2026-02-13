@@ -18,8 +18,6 @@ import { OCRScanner } from "@/components/ocr/OCRScanner";
 import { AIChat } from "@/components/chat/AIChat";
 import { VoiceCommand } from "@/components/voice/VoiceCommand"; // Voice
 import { generateRoutine } from "@/lib/generative-engine"; // Gen AI
-import { VoiceCommand } from "@/components/voice/VoiceCommand"; // Voice
-import { generateRoutine } from "@/lib/generative-engine"; // Gen AI
 
 // Lazy load removed
 // const SensitizationMeter = (await import("@/components/dashboard/SensitizationMeter")).SensitizationMeter;
