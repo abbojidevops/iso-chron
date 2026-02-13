@@ -20,6 +20,7 @@ export const INGREDIENTS: Ingredient[] = [
     { id: "salicylic_acid", name: "Salicylic Acid (BHA)", category: "Exfoliant" },
     { id: "pha", name: "Gluconolactone (PHA)", category: "Exfoliant" },
     { id: "azelaic_acid", name: "Azelaic Acid", category: "Exfoliant" }, // Can also be Brightener/Antibacterial
+    { id: "papaya_enzyme", name: "Papaya Enzyme (Papain)", category: "Exfoliant" },
 
     // --- ANTIOXIDANTS ---
     { id: "ascorbic_acid", name: "L-Ascorbic Acid (Vit C)", category: "Antioxidant" },
@@ -60,6 +61,7 @@ export const INGREDIENTS: Ingredient[] = [
     { id: "benzoyl_peroxide", name: "Benzoyl Peroxide", category: "Antibacterial" },
     { id: "sulfur", name: "Sulfur", category: "Antibacterial" },
     { id: "tea_tree", name: "Tea Tree Oil", category: "Antibacterial" },
+    { id: "activated_charcoal", name: "Activated Charcoal", category: "Antibacterial" },
 
     // --- SUNSCREEN ---
     { id: "spf_mineral", name: "Zinc Oxide / Titanium Dioxide", category: "Sunscreen" },

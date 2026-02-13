@@ -59,7 +59,11 @@ const ALIASES: Record<string, string[]> = {
     // Others
     'benzoyl_peroxide': ['bpo'],
     'spf_mineral': ['zinc oxide', 'titanium dioxide'],
-    'spf_chemical': ['avobenzone', 'octinoxate', 'oxybenzone', 'homosalate', 'octisalate', 'octocrylene']
+    'spf_chemical': ['avobenzone', 'octinoxate', 'oxybenzone', 'homosalate', 'octisalate', 'octocrylene'],
+
+    // User Requested Additions
+    'papaya_enzyme': ['papaya', 'papain', 'carica papaya'],
+    'activated_charcoal': ['charcoal', 'carbon', 'activated carbon', 'detox']
 };
 
 export async function scanImage(imageFile: File | string): Promise<ScanResult> {
