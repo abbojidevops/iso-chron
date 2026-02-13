@@ -1,21 +1,6 @@
 import { SideNav } from "@/components/layout/SideNav";
-import { DashboardAIProvider, useDashboardAI } from "@/context/DashboardAIContext";
-import { VoiceCommand } from "@/components/voice/VoiceCommand";
-import { AIChat } from "@/components/chat/AIChat";
-
-// Inner component to consume context
-function DashboardGlobalOverlay() {
-    const { aiContext, handleVoiceCommand } = useDashboardAI();
-    return (
-        <>
-            {/* Voice and Chat Temporarily Disabled per User Request */}
-            {/* <div className="fixed bottom-6 left-6 z-50">
-                <VoiceCommand onCommand={handleVoiceCommand} />
-            </div>
-            <AIChat context={aiContext} /> */}
-        </>
-    );
-}
+import { DashboardAIProvider } from "@/context/DashboardAIContext";
+import { DashboardGlobalOverlay } from "@/components/dashboard/DashboardGlobalOverlay";
 
 export default function DashboardLayout({
     children,
