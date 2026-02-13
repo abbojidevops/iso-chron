@@ -7,7 +7,22 @@ export type ConflictResult = {
     scoreImpact: number; // Negative for conflicts, Positive for synergy
 };
 
-export const runMolecularAudit = (selectedIngredients: string[]) => {
+// Fitzpatrick Phototype Multipliers
+// Higher phototypes have higher risk with specific acids (PIH risk) but better tolerance to sun
+const PHOTOTYPE_WEIGHTS: Record<string, Record<string, number>> = {
+    "IV-VI": { // Darker skin
+        "Glycolic Acid": 1.5, // Higher risk of irritation/pigmentation
+        "Retinol": 1.2,
+        "Vitamin C": 1.0
+    },
+    "I-III": { // Lighter skin
+        "Glycolic Acid": 1.0,
+        "Retinol": 1.0,
+        "Vitamin C": 1.0
+    }
+};
+
+export const runMolecularAudit = (selectedIngredients: string[], phototype: string = "I-III") => {
     let safetyScore = 100;
     const activeConflicts: ConflictResult[] = [];
 
@@ -15,6 +30,9 @@ export const runMolecularAudit = (selectedIngredients: string[]) => {
     const has = (id: string) => selectedIngredients.includes(id);
     const hasCat = (cat: string) => selectedIngredients.some(id => isCategory(id, cat as any));
     const countCat = (cat: string) => selectedIngredients.filter(id => isCategory(id, cat as any)).length;
+
+    // Get active ingredient objects for name matching
+    const activeIngredients = INGREDIENTS.filter(i => selectedIngredients.includes(i.id));
 
     // --- 1. FATAL CONFLICTS (Critical) ---
 
@@ -120,6 +138,20 @@ export const runMolecularAudit = (selectedIngredients: string[]) => {
     activeConflicts.forEach(c => {
         // Impact can be positive or negative
         safetyScore += c.scoreImpact;
+    });
+
+    // 5. Phototype Calibration (Equity Adjustment)
+    const weights = PHOTOTYPE_WEIGHTS[phototype] || PHOTOTYPE_WEIGHTS["I-III"];
+    activeIngredients.forEach(ing => {
+        // Match partial names (e.g. "Glycolic Acid 7%")
+        const weightEntry = Object.entries(weights).find(([key]) => ing.name.includes(key));
+        if (weightEntry) {
+            const weight = weightEntry[1];
+            if (weight > 1.0) {
+                // E.g. 1.5 weight -> subtract 5 points for caution
+                safetyScore -= (weight - 1.0) * 10;
+            }
+        }
     });
 
     // Clamp score 0-100
