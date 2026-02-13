@@ -7,12 +7,15 @@ import { AIChat } from "@/components/chat/AIChat";
 function DashboardGlobalOverlay() {
     const { aiContext, handleVoiceCommand } = useDashboardAI();
     return (
+    return (
         <>
-            <div className="fixed bottom-6 left-6 z-50">
+            {/* Voice and Chat Temporarily Disabled per User Request */}
+            {/* <div className="fixed bottom-6 left-6 z-50">
                 <VoiceCommand onCommand={handleVoiceCommand} />
             </div>
-            <AIChat context={aiContext} />
+            <AIChat context={aiContext} /> */}
         </>
+    );
     );
 }
 
