@@ -12,8 +12,11 @@ import { AlertTriangle, X, FlaskConical, ShieldCheck, Lock, CheckCircle, Flame, 
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@supabase/supabase-js";
 import { MolecularVisualizer } from "@/components/canvas/MolecularVisualizer";
-import { OCRScanner } from "@/components/ocr/OCRScanner";
-import { AIChat } from "@/components/chat/AIChat";
+// Imports moved to top
+import { SensitizationMeter } from "@/components/dashboard/SensitizationMeter";
+
+// Lazy load removed
+// const SensitizationMeter = (await import("@/components/dashboard/SensitizationMeter")).SensitizationMeter;
 import { MolecularRoutine } from "@/lib/types";
 import { saveMolecularRoutine } from "@/actions/save-routine";
 import { CircularGauge } from "@/components/ui/CircularGauge";
@@ -252,8 +255,7 @@ function DashboardContent() {
         }
     };
 
-    // Lazy load UI components
-    const SensitizationMeter = (await import("@/components/dashboard/SensitizationMeter")).SensitizationMeter;
+    // Lazy load removed -> Switched to static import
 
     return (
         <div className="space-y-6">
