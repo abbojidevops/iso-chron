@@ -376,21 +376,53 @@ export function MolecularVisualizer({
     score?: number;
     stability?: { state: string; stabilityScore: number; details: string };
 }) {
-    const [isScanning, setIsScanning] = useState(false);
+    const [simulationDay, setSimulationDay] = useState(0);
+    const [isSimulating, setIsSimulating] = useState(false);
 
-    // Trigger scan on ingredient change
+    // Derived Visual Stats based on Simulation
+    const visualScore = useMemo(() => {
+        if (!isSimulating) return score;
+        // Linear interpolation towards 100 over 90 days
+        const improvement = (100 - score) * (simulationDay / 90);
+        return Math.min(100, Math.round(score + improvement));
+    }, [score, simulationDay, isSimulating]);
+
+    const visualStatus = useMemo(() => {
+        if (!isSimulating) return status;
+        if (visualScore >= 98) return 'Optimized';
+        if (visualScore >= 90) return 'Stable';
+        if (visualScore >= 70) return 'Improving';
+        return status; // Day 0
+    }, [status, visualScore, isSimulating]);
+
+    // Rotation slows down as health improves
+    const rotationSpeed = 0.5 + ((100 - visualScore) / 100) * 3.5;
+
+    // Auto-play simulation when toggled
     useEffect(() => {
-        if (ingredients.length > 0) {
-            setIsScanning(true);
-            const timer = setTimeout(() => setIsScanning(false), 2000); // 2s Scan
-            return () => clearTimeout(timer);
+        let interval: NodeJS.Timeout;
+        if (isSimulating) {
+            interval = setInterval(() => {
+                setSimulationDay(prev => {
+                    if (prev >= 90) {
+                        setIsSimulating(false);
+                        return 90;
+                    }
+                    return prev + 1;
+                });
+            }, 50); // Fast forward
+        } else if (simulationDay === 90) {
+            // Reset after completion explicitly or keep it? Let's keep it.
+        } else {
+            // Reset if stopped mid-way? No, simpler to just pause.
         }
-    }, [ingredients.length]);
+        return () => clearInterval(interval);
+    }, [isSimulating]);
 
-    // Calculate rotation speed based on score (Lower score = Faster spin)
-    // 100 -> 0.5
-    // 0 -> 4.0
-    const rotationSpeed = 0.5 + ((100 - score) / 100) * 3.5;
+    const toggleSimulation = () => {
+        if (simulationDay === 90) setSimulationDay(0); // Reset
+        setIsSimulating(!isSimulating);
+    };
 
     const satellites = useMemo(() => {
         return ingredients.map((ing, i) => {
@@ -429,7 +461,7 @@ export function MolecularVisualizer({
     }, [ingredients]);
 
     return (
-        <div className="w-full h-full min-h-[400px] rounded-xl overflow-hidden bg-black/60 relative border border-white/10">
+        <div className="w-full h-full min-h-[400px] rounded-xl overflow-hidden bg-black/60 relative border border-white/10 group">
             <Canvas camera={{ position: [0, 0, 7], fov: 40 }} shadows>
                 <color attach="background" args={['#020205']} />
 
@@ -439,7 +471,7 @@ export function MolecularVisualizer({
                 <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} castShadow />
 
                 {/* Hybrid Core: Shader + Glass */}
-                <HybridCore status={status} score={score} stability={stability} />
+                <HybridCore status={visualStatus} score={visualScore} stability={stability} />
 
                 {/* Emulsion Particles (New) */}
                 <EmulsionParticles stability={stability} />
@@ -463,7 +495,7 @@ export function MolecularVisualizer({
                     scale={10}
                     blur={2.5}
                     far={4}
-                    color={status === 'Hazardous' ? 'red' : 'blue'}
+                    color={visualStatus === 'Hazardous' ? 'red' : 'blue'}
                 />
 
                 <OrbitControls
@@ -477,7 +509,7 @@ export function MolecularVisualizer({
                     <Bloom
                         luminanceThreshold={0.2}
                         mipmapBlur
-                        intensity={status === 'Hazardous' ? 3.0 : 1.0}
+                        intensity={visualStatus === 'Hazardous' ? 3.0 : 1.0}
                         radius={0.5}
                     />
                 </EffectComposer>
@@ -486,11 +518,19 @@ export function MolecularVisualizer({
             {/* HUD Overlay */}
             <div className="absolute top-4 left-4 font-mono text-xs text-white/50 pointer-events-none">
                 <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${status === 'Hazardous' ? 'bg-red-500 animate-ping' : 'bg-blue-500'}`} />
+                    <div className={`w-2 h-2 rounded-full ${visualStatus === 'Hazardous' ? 'bg-red-500 animate-ping' : 'bg-blue-500'}`} />
                     VISUAL CORE: HYBRID
                 </div>
                 {isScanning && <div className="text-cyan-400 font-bold mt-1 animate-pulse">ANALYZING COMPOUND...</div>}
-                {status === 'Hazardous' && <div className="text-red-500 font-bold mt-1">CRITICAL INSTABILITY</div>}
+
+                {/* Simulation Status */}
+                {simulationDay > 0 && (
+                    <div className="text-purple-400 font-bold mt-1">
+                        SIMULATION: DAY {simulationDay}
+                    </div>
+                )}
+
+                {visualStatus === 'Hazardous' && <div className="text-red-500 font-bold mt-1">CRITICAL INSTABILITY</div>}
 
                 {stability && stability.state !== 'Stable' && (
                     <div className="text-amber-500 font-bold mt-1 uppercase animate-pulse">
@@ -498,7 +538,33 @@ export function MolecularVisualizer({
                     </div>
                 )}
 
-                <div className="mt-1 opacity-50">SYNC: {score}%</div>
+                <div className="mt-1 opacity-50">SYNC: {visualScore}%</div>
+            </div>
+
+            {/* Time-Lapse Controls (Hover Only) */}
+            <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="bg-black/80 backdrop-blur border border-white/10 rounded-lg p-3">
+                    <div className="flex items-center justify-between mb-2 text-xs text-neutral-400 font-mono">
+                        <span>PREDICTED EVOLUTION</span>
+                        <span>{simulationDay} DAYS</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={toggleSimulation}
+                            className="w-8 h-8 rounded bg-white/10 hover:bg-purple-500 text-white flex items-center justify-center transition-colors"
+                        >
+                            {isSimulating ? '⏸' : '▶'}
+                        </button>
+                        <input
+                            type="range"
+                            min="0"
+                            max="90"
+                            value={simulationDay}
+                            onChange={(e) => setSimulationDay(parseInt(e.target.value))}
+                            className="flex-1 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-purple-500 [&::-webkit-slider-thumb]:rounded-full"
+                        />
+                    </div>
+                </div>
             </div>
         </div>
     );
