@@ -163,8 +163,46 @@ function DashboardContent() {
         if (isSignedIn) fetchHistory();
     }, [isSignedIn, user]);
 
+    // Phototype State (Default I-III)
+    const [phototype, setPhototype] = useState("I-III");
+
     // Derived state from the new engine
-    const { finalScore, conflicts, status } = runMolecularAudit(selectedIngredients);
+    const { finalScore, conflicts, status } = runMolecularAudit(selectedIngredients, phototype);
+
+    // Predictive Bio-Diagnostic Suite
+    const [sensitization, setSensitization] = useState<{ risk: string; score: number; flags: string[] } | null>(null);
+    const [stability, setStability] = useState<{ state: string; stabilityScore: number; details: string } | null>(null);
+    const [microbiome, setMicrobiome] = useState<{ status: string; metrics: any } | null>(null);
+
+    // Run Diagnostics when ingredients change
+    useEffect(() => {
+        const analyze = async () => {
+            if (selectedIngredients.length === 0) {
+                setSensitization(null);
+                setStability(null);
+                setMicrobiome(null);
+                return;
+            }
+
+            const activeNames = ingredients.filter(i => selectedIngredients.includes(i.id)).map(i => i.name);
+
+            // 1. Toxicology
+            const { predictSensitization } = await import("@/lib/toxicology");
+            const sensResult = predictSensitization(activeNames, 85); // Mock barrier heatlh 85
+            setSensitization(sensResult);
+
+            // 2. Stability
+            const { predictStability } = await import("@/lib/stability");
+            const stabResult = predictStability(activeNames, 5.5); // pH 5.5
+            setStability(stabResult);
+
+            // 3. Microbiome
+            const { analyzeMicrobiome } = await import("@/lib/microbiome");
+            const microResult = analyzeMicrobiome(activeNames, []);
+            setMicrobiome(microResult);
+        };
+        analyze();
+    }, [selectedIngredients, ingredients]);
 
     const toggleIngredient = (id: string) => {
         let next: string[];
@@ -194,7 +232,9 @@ function DashboardContent() {
             const result = await saveMolecularRoutine(token, {
                 ingredients: selectedIngredients,
                 safetyScore: finalScore,
-                status: status
+                status: status,
+                // New Data points (if schema allows, otherwise ignore for now)
+                // We will add the new columns to the action later
             });
 
             if (!result.success) throw new Error(result.error);
@@ -212,6 +252,9 @@ function DashboardContent() {
         }
     };
 
+    // Lazy load UI components
+    const SensitizationMeter = (await import("@/components/dashboard/SensitizationMeter")).SensitizationMeter;
+
     return (
         <div className="space-y-6">
             {/* Header Section */}
@@ -223,6 +266,16 @@ function DashboardContent() {
 
                 {/* User & Global Actions */}
                 <div className="flex items-center gap-4">
+                    {/* Phototype Calibration */}
+                    <select
+                        className="bg-white/5 border border-white/10 rounded-full px-3 py-1 text-xs text-neutral-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        value={phototype}
+                        onChange={(e) => setPhototype(e.target.value)}
+                    >
+                        <option value="I-III">Type I-III (Light)</option>
+                        <option value="IV-VI">Type IV-VI (Dark)</option>
+                    </select>
+
                     <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/5">
                         <div className={`w-2 h-2 rounded-full ${status === 'Optimal' ? 'bg-green-500' : 'bg-amber-500'} animate-pulse`} />
                         <span className="text-xs font-mono text-neutral-300 uppercase">{status} Status</span>
@@ -234,12 +287,12 @@ function DashboardContent() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-180px)]">
 
                 {/* LEFT COLUMN: HERO VISUALIZER (50%) */}
-                <div className="flex flex-col gap-6 h-full">
+                <div className="flex flex-col gap-6 h-full overflow-y-auto pr-2 custom-scrollbar">
                     {/* 3D SANDBOX CARD */}
                     <div
                         key={selectedIngredients.join('-')}
                         className={cn(
-                            "relative flex-1 bg-[#0A0A0A] rounded-3xl border border-white/5 overflow-hidden group shadow-2xl",
+                            "relative shrink-0 h-[400px] bg-[#0A0A0A] rounded-3xl border border-white/5 overflow-hidden group shadow-2xl",
                             selectedIngredients.length > 0 && laserAnimationClass
                         )}
                     >
@@ -256,6 +309,7 @@ function DashboardContent() {
                                             conflicts={conflicts}
                                             status={status}
                                             score={finalScore} // Linked Score
+                                            stability={stability || undefined}
                                         />
                                     </motion.div>
                                 </AnimatePresence>
@@ -273,13 +327,66 @@ function DashboardContent() {
                                 Serum Simulation
                                 <span className="text-[10px] px-2 py-0.5 bg-white/10 rounded-full text-neutral-400 font-mono">REAL-TIME</span>
                             </h3>
+                            {stability && (
+                                <div className="mt-2 flex items-center gap-2">
+                                    <div className={`w-2 h-2 rounded-full ${stability.state === 'Stable' ? 'bg-green-500' : 'bg-red-500'}`} />
+                                    <span className="text-xs text-neutral-300">Phase: {stability.state}</span>
+                                </div>
+                            )}
                         </div>
                     </div>
 
-                    {/* METRICS & ACTIONS ROW (Preserved) */}
-                    <div className="grid grid-cols-2 gap-6 h-[200px]">
+                    {/* DIAGNOSTIC METRICS ROW */}
+                    {selectedIngredients.length > 0 && sensitization && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Sensitization Meter */}
+                            <SensitizationMeter
+                                score={sensitization.score}
+                                riskLabel={sensitization.risk}
+                                flags={sensitization.flags}
+                            />
+
+                            {/* Microbiome Stats */}
+                            <div className="p-6 rounded-3xl bg-[#0a0a0a] border border-white/10 flex flex-col justify-between">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-sm font-medium text-neutral-400 uppercase tracking-widest">Flora Diversity</h3>
+                                    <div className={`p-2 rounded-full bg-white/5 ${microbiome?.status === 'Diverse' ? 'text-green-400' : 'text-amber-400'}`}>
+                                        <Zap className="w-4 h-4" />
+                                    </div>
+                                </div>
+
+                                {microbiome && (
+                                    <>
+                                        <div className="text-3xl font-bold text-white mb-1">{Math.round(microbiome.metrics.floraDiversity * 100)}%</div>
+                                        <div className="text-xs text-neutral-500 mb-4">Shannon Index: {microbiome.status}</div>
+
+                                        <div className="space-y-3">
+                                            <div className="flex justify-between text-xs text-neutral-400">
+                                                <span>Barrier Integrity</span>
+                                                <span className="text-white">{microbiome.metrics.barrierIntegrity}%</span>
+                                            </div>
+                                            <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                                                <div className="h-full bg-blue-500" style={{ width: `${microbiome.metrics.barrierIntegrity}%` }} />
+                                            </div>
+
+                                            <div className="flex justify-between text-xs text-neutral-400">
+                                                <span>Hydration Sig.</span>
+                                                <span className="text-white">{microbiome.metrics.hydrationSignature}%</span>
+                                            </div>
+                                            <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                                                <div className="h-full bg-cyan-400" style={{ width: `${microbiome.metrics.hydrationSignature}%` }} />
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* METRICS & ACTIONS ROW (Legacy) */}
+                    <div className="grid grid-cols-2 gap-6">
                         {/* SAFETY GAUGE CARD */}
-                        <div className="bg-card/40 backdrop-blur-md border border-white/5 rounded-3xl p-6 flex flex-col items-center justify-center relative overflow-hidden">
+                        <div className="bg-card/40 backdrop-blur-md border border-white/5 rounded-3xl p-6 flex flex-col items-center justify-center relative overflow-hidden h-[200px]">
                             <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
                             <CircularGauge score={finalScore} size={140} />
                             {uvAlert && (
@@ -290,7 +397,7 @@ function DashboardContent() {
                         </div>
 
                         {/* ACTION CARD */}
-                        <div className="bg-card/40 backdrop-blur-md border border-white/5 rounded-3xl p-6 flex flex-col justify-between">
+                        <div className="bg-card/40 backdrop-blur-md border border-white/5 rounded-3xl p-6 flex flex-col justify-between h-[200px]">
                             <div>
                                 <div className="text-sm text-neutral-400 mb-1">Total Estimated Cost</div>
                                 <div className="text-3xl font-bold text-white">$45.00</div>
@@ -341,7 +448,6 @@ function DashboardContent() {
 
                 {/* RIGHT COLUMN: CONTROLS & CHRONO (50%) */}
                 <div className="flex flex-col gap-6 h-full overflow-hidden">
-
                     {/* INGREDIENT SELECTOR (Scrollable) */}
                     <div className="flex-1 bg-card/60 backdrop-blur-xl border border-white/5 rounded-3xl p-6 flex flex-col min-h-0">
                         <div className="flex items-center justify-between mb-4 shrink-0">

@@ -137,17 +137,22 @@ declare module '@react-three/fiber' {
 interface HybridCoreProps {
     status: string;
     score: number;
+    stability?: { state: string; stabilityScore: number };
 }
 
-function HybridCore({ status, score }: HybridCoreProps) {
+function HybridCore({ status, score, stability }: HybridCoreProps) {
     const mesh = useRef<THREE.Mesh>(null);
     const materialRef = useRef<THREE.ShaderMaterial>(null);
 
     const targetColor = useMemo(() => {
+        if (stability && stability.state !== 'Stable') {
+            if (stability.state === 'Creaming') return new THREE.Color('#f59e0b'); // Amber
+            return new THREE.Color('#ff0000'); // Red for inversion/flocculation
+        }
         if (status === 'Hazardous') return new THREE.Color('#ff0000');
         if (status === 'Caution') return new THREE.Color('#f59e0b');
         return new THREE.Color('#3b82f6');
-    }, [status]);
+    }, [status, stability]);
 
     useFrame((state) => {
         if (materialRef.current) {
@@ -156,7 +161,12 @@ function HybridCore({ status, score }: HybridCoreProps) {
             // Distortion based on Score (Inverse: Lower score = More deform)
             // Score 100 -> 0.0
             // Score 0 -> 1.0
-            const targetDeform = Math.max(0, (100 - score) / 100);
+            let targetDeform = Math.max(0, (100 - score) / 100);
+
+            // Add extra deform for instability
+            if (stability && stability.state !== 'Stable') {
+                targetDeform += 0.5;
+            }
 
             materialRef.current.uniforms.uDeform.value = THREE.MathUtils.lerp(
                 materialRef.current.uniforms.uDeform.value,
@@ -165,7 +175,7 @@ function HybridCore({ status, score }: HybridCoreProps) {
             );
 
             materialRef.current.uniforms.uColor.value.lerp(targetColor, 0.05);
-            materialRef.current.uniforms.uIntensity.value = status === 'Hazardous' ? 2.5 : 1.5;
+            materialRef.current.uniforms.uIntensity.value = (status === 'Hazardous' || (stability && stability.state !== 'Stable')) ? 2.5 : 1.5;
         }
     });
 
@@ -202,10 +212,77 @@ function HybridCore({ status, score }: HybridCoreProps) {
     );
 }
 
-// ... Satellites and LaserScan ... (omitted from this replace for brevity if possible, but context needed)
-// Actually I need to replace HybridCore AND MolecularVisualizer.
-// Since they are far apart, I might use multi_replace or just replace HybridCore first.
-// Let's replace HybridCore first.
+// Emulsion Particles simulating O/W phases
+function EmulsionParticles({ stability }: { stability?: { state: string } }) {
+    const count = 100;
+    const [positions, setPositions] = useState<Float32Array>(new Float32Array(count * 3));
+
+    useMemo(() => {
+        const pos = new Float32Array(count * 3);
+        for (let i = 0; i < count; i++) {
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            const r = 2.5 + Math.random(); // Orbit radius
+            pos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+            pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+            pos[i * 3 + 2] = r * Math.cos(phi);
+        }
+        setPositions(pos);
+    }, []);
+
+    const mesh = useRef<THREE.InstancedMesh>(null);
+
+    useFrame((state) => {
+        if (!mesh.current) return;
+        const t = state.clock.elapsedTime;
+
+        let separationFactor = 0;
+        if (stability) {
+            if (stability.state === 'Creaming') separationFactor = 1.0; // Float up
+            if (stability.state === 'Flocculation') separationFactor = -1.0; // Clump/Sink
+        }
+
+        const dummy = new THREE.Object3D();
+
+        for (let i = 0; i < count; i++) {
+            let x = positions[i * 3];
+            let y = positions[i * 3 + 1];
+            let z = positions[i * 3 + 2];
+
+            // Apply specific movement based on stability
+            if (separationFactor !== 0) {
+                // Simulate separation vertical drift
+                y += Math.sin(t * 0.5 + i) * 0.1 + (separationFactor * 0.02 * t);
+                // Clump if flocculating
+                if (separationFactor < 0) {
+                    x *= 0.999;
+                    z *= 0.999;
+                }
+            } else {
+                // Normal random orbit
+                const angle = t * 0.2 + i * 0.1;
+                const r = Math.sqrt(x * x + z * z);
+                x = r * Math.cos(angle);
+                z = r * Math.sin(angle);
+            }
+
+            dummy.position.set(x, y, z);
+            dummy.scale.setScalar(0.05);
+            dummy.updateMatrix();
+            mesh.current.setMatrixAt(i, dummy.matrix);
+        }
+        mesh.current.instanceMatrix.needsUpdate = true;
+    });
+
+    if (!stability || stability.state === 'Stable') return null;
+
+    return (
+        <instancedMesh ref={mesh} args={[undefined, undefined, count]}>
+            <sphereGeometry args={[1, 8, 8]} />
+            <meshBasicMaterial color={stability.state === 'Creaming' ? '#fbbf24' : '#ef4444'} transparent opacity={0.6} />
+        </instancedMesh>
+    );
+}
 
 function SatelliteMolecule({
     position,
@@ -290,12 +367,14 @@ export function MolecularVisualizer({
     ingredients,
     conflicts,
     status,
-    score = 100 // Default to optimal
+    score = 100, // Default to optimal
+    stability
 }: {
     ingredients: Ingredient[];
     conflicts: ConflictResult[];
     status: string;
     score?: number;
+    stability?: { state: string; stabilityScore: number; details: string };
 }) {
     const [isScanning, setIsScanning] = useState(false);
 
@@ -360,7 +439,10 @@ export function MolecularVisualizer({
                 <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} castShadow />
 
                 {/* Hybrid Core: Shader + Glass */}
-                <HybridCore status={status} score={score} />
+                <HybridCore status={status} score={score} stability={stability} />
+
+                {/* Emulsion Particles (New) */}
+                <EmulsionParticles stability={stability} />
 
                 {/* Satellites */}
                 {satellites.map((sat) => (
@@ -409,6 +491,13 @@ export function MolecularVisualizer({
                 </div>
                 {isScanning && <div className="text-cyan-400 font-bold mt-1 animate-pulse">ANALYZING COMPOUND...</div>}
                 {status === 'Hazardous' && <div className="text-red-500 font-bold mt-1">CRITICAL INSTABILITY</div>}
+
+                {stability && stability.state !== 'Stable' && (
+                    <div className="text-amber-500 font-bold mt-1 uppercase animate-pulse">
+                        ⚠️ {stability.state} DETECTED
+                    </div>
+                )}
+
                 <div className="mt-1 opacity-50">SYNC: {score}%</div>
             </div>
         </div>
