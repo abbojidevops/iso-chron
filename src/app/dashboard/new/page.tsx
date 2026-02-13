@@ -272,6 +272,8 @@ function DashboardContent() {
 
     const [aiContext, setAiContext] = useState<string>("");
 
+    const [aiContext, setAiContext] = useState<string>("");
+
     // Generative AI Handler
     const handleGenerateRoutine = () => {
         // Mock Profile for now (could come from DB)
