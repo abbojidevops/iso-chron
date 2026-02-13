@@ -602,7 +602,7 @@ function DashboardContent() {
             </div>
 
             {/* AI Assistant Floating */}
-            <AIChat context={`Score: ${finalScore}, Status: ${status}`} />
+            <AIChat context={aiContext || `Score: ${finalScore}, Status: ${status}`} />
             {/* Voice Control */}
             <VoiceCommand onCommand={handleVoiceCommand} />
         </div>
