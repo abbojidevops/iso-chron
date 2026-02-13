@@ -270,6 +270,8 @@ function DashboardContent() {
         }
     };
 
+    const [aiContext, setAiContext] = useState<string>("");
+
     // Generative AI Handler
     const handleGenerateRoutine = () => {
         // Mock Profile for now (could come from DB)
@@ -290,7 +292,7 @@ function DashboardContent() {
         const validIds = uniqueIds.filter(id => INGREDIENTS.find(ing => ing.id === id));
 
         setSelectedIngredients(validIds);
-        alert(`AI Generated Routine Focused on: ${generated.focus}`);
+        setAiContext(`Just generated a routine focused on ${generated.focus}. Rationale: ${generated.rationale.join(" ")}`);
     };
 
     // Lazy load removed -> Switched to static import
