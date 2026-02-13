@@ -14,6 +14,8 @@ import { createClient } from "@supabase/supabase-js";
 import { MolecularVisualizer } from "@/components/canvas/MolecularVisualizer";
 // Imports moved to top
 import { SensitizationMeter } from "@/components/dashboard/SensitizationMeter";
+import { OCRScanner } from "@/components/ocr/OCRScanner";
+import { AIChat } from "@/components/chat/AIChat";
 
 // Lazy load removed
 // const SensitizationMeter = (await import("@/components/dashboard/SensitizationMeter")).SensitizationMeter;
