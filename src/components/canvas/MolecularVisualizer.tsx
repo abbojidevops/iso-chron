@@ -378,6 +378,16 @@ export function MolecularVisualizer({
 }) {
     const [simulationDay, setSimulationDay] = useState(0);
     const [isSimulating, setIsSimulating] = useState(false);
+    const [isScanning, setIsScanning] = useState(false);
+
+    // Trigger scan on ingredient change
+    useEffect(() => {
+        if (ingredients.length > 0) {
+            setIsScanning(true);
+            const timer = setTimeout(() => setIsScanning(false), 2000); // 2s Scan
+            return () => clearTimeout(timer);
+        }
+    }, [ingredients.length]);
 
     // Derived Visual Stats based on Simulation
     const visualScore = useMemo(() => {
