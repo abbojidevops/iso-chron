@@ -15,7 +15,6 @@ function DashboardGlobalOverlay() {
             <AIChat context={aiContext} /> */}
         </>
     );
-    );
 }
 
 export default function DashboardLayout({
