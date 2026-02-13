@@ -20,7 +20,8 @@ import { revalidatePath } from 'next/cache'
 export async function saveMolecularRoutine(token: string, formData: {
     ingredients: string[],
     safetyScore: number,
-    status: string
+    status: string,
+    toxicologyReport?: any // New field
 }) {
     if (!token) return { success: false, error: "Unauthorized" };
 
@@ -50,7 +51,8 @@ export async function saveMolecularRoutine(token: string, formData: {
             ingredients: formData.ingredients,
             safety_score: formData.safetyScore,
             status: formData.status,
-            routine_name: `Routine Analysis - ${new Date().toLocaleTimeString()}`
+            routine_name: `Routine Analysis - ${new Date().toLocaleTimeString()}`,
+            toxicology_report: formData.toxicologyReport // Save JSON
         }])
         .select()
 

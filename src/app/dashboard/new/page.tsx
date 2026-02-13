@@ -178,7 +178,7 @@ function DashboardContent() {
     const { finalScore, conflicts, status } = runMolecularAudit(selectedIngredients, phototype);
 
     // Predictive Bio-Diagnostic Suite
-    const [sensitization, setSensitization] = useState<{ risk: string; score: number; flags: string[] } | null>(null);
+    const [sensitization, setSensitization] = useState<{ risk: string; score: number; flags: Array<{ name: string; basis: string }> } | null>(null);
     const [stability, setStability] = useState<{ state: string; stabilityScore: number; details: string } | null>(null);
     const [microbiome, setMicrobiome] = useState<{ status: string; metrics: any } | null>(null);
 
@@ -194,9 +194,12 @@ function DashboardContent() {
 
             const activeNames = ingredients.filter(i => selectedIngredients.includes(i.id)).map(i => i.name);
 
-            // 1. Toxicology
-            const { predictSensitization } = await import("@/lib/toxicology");
-            const sensResult = predictSensitization(activeNames, 85); // Mock barrier heatlh 85
+            // 1. Toxicology (Sensitization Sentinel)
+            const { calculateSensitizationRisk } = await import("@/lib/toxicology");
+            // Assuming barrier health is 85 (mock) or derived from microbiome
+            const barrierScore = microbiome?.metrics?.barrierIntegrity ? Math.round(microbiome.metrics.barrierIntegrity) : 85;
+
+            const sensResult = calculateSensitizationRisk(activeNames, barrierScore);
             setSensitization(sensResult);
 
             // 2. Stability
@@ -241,8 +244,7 @@ function DashboardContent() {
                 ingredients: selectedIngredients,
                 safetyScore: finalScore,
                 status: status,
-                // New Data points (if schema allows, otherwise ignore for now)
-                // We will add the new columns to the action later
+                toxicologyReport: sensitization // Pass the report
             });
 
             if (!result.success) throw new Error(result.error);
