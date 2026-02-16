@@ -47,7 +47,9 @@ body {
 
   .scientific-grid {
     background-size: 40px 40px;
-    background-image: linear-gradient(to right, rgba(37, 99, 235, 0.05) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(37, 99, 235, 0.05) 1px, transparent 1px);
+    background-image:
+      radial-gradient(circle at 50% 50%, rgba(37, 99, 235, 0.05) 0%, transparent 50%),
+      linear-gradient(to right, rgba(37, 99, 235, 0.08) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(37, 99, 235, 0.08) 1px, transparent 1px);
   }
 }

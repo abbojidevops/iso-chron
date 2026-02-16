@@ -31,7 +31,7 @@ export function SideNav() {
 
             {/* Sidebar Container */}
             <div className={cn(
-                "fixed inset-y-0 left-0 z-40 w-64 bg-white/80 backdrop-blur-xl border-r border-neutral-200 flex flex-col transition-transform duration-300 md:translate-x-0 shadow-2xl",
+                "fixed inset-y-0 left-0 z-40 w-64 bg-white/80 backdrop-blur-xl border-r border-neutral-300 flex flex-col transition-transform duration-300 md:translate-x-0 shadow-xl",
                 isOpen ? "translate-x-0" : "-translate-x-full"
             )}>
                 {/* Header */}
