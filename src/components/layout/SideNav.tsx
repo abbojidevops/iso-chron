@@ -3,13 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { FlaskConical, History, ShieldAlert, Calendar, Settings, LogOut, Menu, X } from "lucide-react";
+import { FlaskConical, History, ShieldAlert, Calendar, Settings, LogOut, Menu, X, HelpCircle } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SignOutButton } from "@clerk/nextjs";
-import { HelpCircle } from "lucide-react";
-
-
 
 const navItems = [
     { name: "Molecular Vault", href: "/dashboard/new", icon: FlaskConical },
@@ -27,25 +24,25 @@ export function SideNav() {
             {/* Mobile Toggle */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="md:hidden fixed top-4 left-4 z-50 p-2 bg-black/50 backdrop-blur-md rounded-full border border-white/10 text-white"
+                className="md:hidden fixed top-4 left-4 z-50 p-2 bg-white/50 backdrop-blur-md rounded-full border border-neutral-200 text-neutral-900"
             >
                 {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
 
             {/* Sidebar Container */}
             <div className={cn(
-                "fixed inset-y-0 left-0 z-40 w-64 bg-[#050505]/80 backdrop-blur-[25px] border-r border-white/5 flex flex-col transition-transform duration-300 md:translate-x-0 shadow-[4px_0_24px_rgba(0,0,0,0.4)]",
+                "fixed inset-y-0 left-0 z-40 w-64 bg-white/80 backdrop-blur-xl border-r border-neutral-200 flex flex-col transition-transform duration-300 md:translate-x-0 shadow-2xl",
                 isOpen ? "translate-x-0" : "-translate-x-full"
             )}>
                 {/* Header */}
                 <div className="p-8 pb-4">
                     <div className="flex items-center gap-2 mb-1">
-                        <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
-                            <FlaskConical className="w-4 h-4 text-blue-400" />
+                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                            <FlaskConical className="w-4 h-4 text-white" />
                         </div>
-                        <h1 className="text-xl font-bold tracking-tight text-white">ISO-CHRON</h1>
+                        <h1 className="text-xl font-bold tracking-tight text-neutral-900">ISO-CHRON</h1>
                     </div>
-                    <p className="text-[10px] text-neutral-500 font-mono tracking-widest pl-10">COMMAND CENTER v2.1</p>
+                    <p className="text-[10px] text-neutral-400 font-mono tracking-widest pl-10 uppercase">Scientific Efficiency</p>
                 </div>
 
                 {/* Navigation Links */}
@@ -60,17 +57,17 @@ export function SideNav() {
                                 className={cn(
                                     "flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 group relative overflow-hidden",
                                     isActive
-                                        ? "text-white bg-blue-500/10 border border-blue-500/20"
-                                        : "text-neutral-400 hover:text-white hover:bg-white/5"
+                                        ? "text-blue-700 bg-blue-50"
+                                        : "text-neutral-500 hover:text-blue-600 hover:bg-neutral-50"
                                 )}
                             >
-                                <item.icon className={cn("w-5 h-5 transition-colors", isActive ? "text-blue-400" : "text-neutral-500 group-hover:text-white")} />
+                                <item.icon className={cn("w-5 h-5 transition-colors", isActive ? "text-blue-600" : "text-neutral-400 group-hover:text-blue-500")} />
                                 <span className="relative z-10">{item.name}</span>
 
                                 {isActive && (
                                     <motion.div
                                         layoutId="active-nav"
-                                        className="absolute inset-0 bg-blue-500/5 z-0"
+                                        className="absolute inset-0 bg-blue-100/50 z-0 border-r-2 border-blue-500"
                                         initial={false}
                                         transition={{ type: "spring", stiffness: 300, damping: 30 }}
                                     />
@@ -81,21 +78,21 @@ export function SideNav() {
                 </nav>
 
                 {/* Footer / User */}
-                <div className="p-4 border-t border-white/5 space-y-2">
+                <div className="p-4 border-t border-neutral-100 space-y-2">
                     <Link href="/how-it-works">
-                        <button className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-neutral-400 rounded-xl hover:bg-white/5 hover:text-white transition-all w-full text-left">
+                        <button className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-neutral-500 rounded-xl hover:bg-neutral-50 hover:text-blue-600 transition-all w-full text-left">
                             <HelpCircle className="w-5 h-5" />
                             <span>How it Works</span>
                         </button>
                     </Link>
 
-                    <div className="px-4 py-3 rounded-xl bg-white/5 border border-white/5 flex items-center justify-between">
+                    <div className="px-4 py-3 rounded-xl bg-neutral-50 border border-neutral-100 flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                            <span className="text-xs text-neutral-400">System Online</span>
+                            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                            <span className="text-xs text-neutral-500 font-medium">System Online</span>
                         </div>
                         <SignOutButton>
-                            <button className="text-neutral-500 hover:text-red-400 transition-colors">
+                            <button className="text-neutral-400 hover:text-red-500 transition-colors">
                                 <LogOut className="w-4 h-4" />
                             </button>
                         </SignOutButton>
@@ -106,7 +103,7 @@ export function SideNav() {
             {/* Mobile Overlay */}
             {isOpen && (
                 <div
-                    className="fixed inset-0 bg-black/80 backdrop-blur-sm z-30 md:hidden"
+                    className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30 md:hidden"
                     onClick={() => setIsOpen(false)}
                 />
             )}

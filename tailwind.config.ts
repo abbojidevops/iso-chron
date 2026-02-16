@@ -10,27 +10,43 @@ export default {
     theme: {
         extend: {
             colors: {
-                background: '#050505',
-                foreground: '#ededed',
+                background: '#F8FAFC', // Soft white/blue tint
+                foreground: '#0F172A', // Slate 900
                 card: {
-                    DEFAULT: 'rgba(20, 20, 20, 0.6)',
-                    foreground: '#ffffff'
+                    DEFAULT: 'rgba(255, 255, 255, 0.7)',
+                    foreground: '#0F172A'
                 },
                 primary: {
-                    DEFAULT: '#ffffff',
-                    foreground: '#000000'
+                    DEFAULT: '#2563EB', // Electric Blue
+                    foreground: '#FFFFFF'
+                },
+                secondary: {
+                    DEFAULT: '#E879F9', // Vivid Pink/Purple
+                    foreground: '#FFFFFF'
                 },
                 accent: {
-                    DEFAULT: '#3b82f6',
-                    foreground: '#ffffff'
+                    DEFAULT: '#F1F5F9', // Slate 100
+                    foreground: '#0F172A'
+                },
+                muted: {
+                    DEFAULT: '#64748B', // Slate 500
+                    foreground: '#F8FAFC'
                 },
                 destructive: {
-                    DEFAULT: '#ef4444',
-                    foreground: '#ffffff'
+                    DEFAULT: '#EF4444',
+                    foreground: '#FFFFFF'
                 },
-                border: 'rgba(255, 255, 255, 0.1)',
-                input: 'rgba(255, 255, 255, 0.05)',
-                ring: '#ffffff',
+                border: '#E2E8F0', // Slate 200
+                input: '#F1F5F9',
+                ring: '#2563EB',
+            },
+            borderRadius: {
+                lg: 'var(--radius)',
+                md: 'calc(var(--radius) - 2px)',
+                sm: 'calc(var(--radius) - 4px)',
+                xl: '1rem',
+                '2xl': '1.5rem',
+                '3xl': '2rem',
             },
             fontFamily: {
                 sans: ['var(--font-geist-sans)'],

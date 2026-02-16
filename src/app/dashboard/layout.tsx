@@ -9,7 +9,7 @@ export default function DashboardLayout({
 }) {
     return (
         <DashboardAIProvider>
-            <div className="flex h-screen overflow-hidden bg-[#050505]">
+            <div className="flex h-screen overflow-hidden bg-background scientific-grid text-foreground">
                 <SideNav />
                 <main className="flex-1 overflow-y-auto md:pl-64 transition-all duration-300">
                     <div className="min-h-full p-4 md:p-8">
