@@ -296,8 +296,8 @@ function DashboardContent() {
             {/* Header Section */}
             <header className="flex items-center justify-between mb-8">
                 <div>
-                    <h2 className="text-2xl font-bold text-white tracking-tight">Molecular Vault</h2>
-                    <p className="text-neutral-400 text-sm">Analyze compound interactions and optimize routines.</p>
+                    <h2 className="text-2xl font-bold text-neutral-900 tracking-tight">Molecular Vault</h2>
+                    <p className="text-neutral-500 text-sm">Analyze compound interactions and optimize routines.</p>
                 </div>
 
                 {/* User & Global Actions */}
@@ -305,7 +305,7 @@ function DashboardContent() {
                     {/* Gen AI Button */}
                     <button
                         onClick={handleGenerateRoutine}
-                        className="hidden md:flex items-center gap-2 px-4 py-1 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/50 rounded-full text-purple-400 text-xs transition-colors"
+                        className="hidden md:flex items-center gap-2 px-4 py-1 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-full text-purple-600 text-xs transition-colors font-medium shadow-sm"
                     >
                         <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
                         AI GENERATE
@@ -313,7 +313,7 @@ function DashboardContent() {
 
                     {/* Phototype Calibration */}
                     <select
-                        className="bg-white/5 border border-white/10 rounded-full px-3 py-1 text-xs text-neutral-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="bg-white border border-neutral-200 rounded-full px-3 py-1 text-xs text-neutral-600 focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-sm"
                         value={phototype}
                         onChange={(e) => setPhototype(e.target.value)}
                     >
@@ -321,9 +321,9 @@ function DashboardContent() {
                         <option value="IV-VI">Type IV-VI (Dark)</option>
                     </select>
 
-                    <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/5">
+                    <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-white rounded-full border border-neutral-200 shadow-sm">
                         <div className={`w-2 h-2 rounded-full ${status === 'Optimal' ? 'bg-green-500' : 'bg-amber-500'} animate-pulse`} />
-                        <span className="text-xs font-mono text-neutral-300 uppercase">{status} Status</span>
+                        <span className="text-xs font-mono text-neutral-600 uppercase">{status} Status</span>
                     </div>
                 </div>
             </header>
@@ -333,11 +333,11 @@ function DashboardContent() {
 
                 {/* LEFT COLUMN: HERO VISUALIZER (50%) */}
                 <div className="flex flex-col gap-6 h-full overflow-y-auto pr-2 custom-scrollbar">
-                    {/* 3D SANDBOX CARD */}
+                    {/* 3D SANDBOX CARD - KEEPS DARK THEME FOR CONTRAST */}
                     <div
                         key={selectedIngredients.join('-')}
                         className={cn(
-                            "relative shrink-0 h-[400px] bg-[#0A0A0A] rounded-3xl border border-white/5 overflow-hidden group shadow-2xl",
+                            "relative shrink-0 h-[400px] bg-[#0A0A0A] rounded-3xl border border-neutral-200 overflow-hidden group shadow-lg", // Kept dark background
                             selectedIngredients.length > 0 && laserAnimationClass
                         )}
                     >
@@ -392,33 +392,33 @@ function DashboardContent() {
                             />
 
                             {/* Microbiome Stats */}
-                            <div className="p-6 rounded-3xl bg-[#0a0a0a] border border-white/10 flex flex-col justify-between">
+                            <div className="p-6 rounded-3xl glass-card flex flex-col justify-between">
                                 <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-sm font-medium text-neutral-400 uppercase tracking-widest">Flora Diversity</h3>
-                                    <div className={`p-2 rounded-full bg-white/5 ${microbiome?.status === 'Diverse' ? 'text-green-400' : 'text-amber-400'}`}>
+                                    <h3 className="text-sm font-medium text-neutral-500 uppercase tracking-widest">Flora Diversity</h3>
+                                    <div className={`p-2 rounded-full bg-white border border-neutral-100 shadow-sm ${microbiome?.status === 'Diverse' ? 'text-green-500' : 'text-amber-500'}`}>
                                         <Zap className="w-4 h-4" />
                                     </div>
                                 </div>
 
                                 {microbiome && (
                                     <>
-                                        <div className="text-3xl font-bold text-white mb-1">{Math.round(microbiome.metrics.floraDiversity * 100)}%</div>
+                                        <div className="text-3xl font-bold text-neutral-900 mb-1">{Math.round(microbiome.metrics.floraDiversity * 100)}%</div>
                                         <div className="text-xs text-neutral-500 mb-4">Shannon Index: {microbiome.status}</div>
 
                                         <div className="space-y-3">
-                                            <div className="flex justify-between text-xs text-neutral-400">
+                                            <div className="flex justify-between text-xs text-neutral-500">
                                                 <span>Barrier Integrity</span>
-                                                <span className="text-white">{microbiome.metrics.barrierIntegrity}%</span>
+                                                <span className="text-neutral-900 font-medium">{microbiome.metrics.barrierIntegrity}%</span>
                                             </div>
-                                            <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                                            <div className="h-1.5 w-full bg-neutral-100 rounded-full overflow-hidden">
                                                 <div className="h-full bg-blue-500" style={{ width: `${microbiome.metrics.barrierIntegrity}%` }} />
                                             </div>
 
-                                            <div className="flex justify-between text-xs text-neutral-400">
+                                            <div className="flex justify-between text-xs text-neutral-500">
                                                 <span>Hydration Sig.</span>
-                                                <span className="text-white">{microbiome.metrics.hydrationSignature}%</span>
+                                                <span className="text-neutral-900 font-medium">{microbiome.metrics.hydrationSignature}%</span>
                                             </div>
-                                            <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                                            <div className="h-1.5 w-full bg-neutral-100 rounded-full overflow-hidden">
                                                 <div className="h-full bg-cyan-400" style={{ width: `${microbiome.metrics.hydrationSignature}%` }} />
                                             </div>
                                         </div>
@@ -431,21 +431,21 @@ function DashboardContent() {
                     {/* METRICS & ACTIONS ROW (Legacy) */}
                     <div className="grid grid-cols-2 gap-6">
                         {/* SAFETY GAUGE CARD */}
-                        <div className="bg-card/40 backdrop-blur-md border border-white/5 rounded-3xl p-6 flex flex-col items-center justify-center relative overflow-hidden h-[200px]">
-                            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
+                        <div className="glass-card p-6 flex flex-col items-center justify-center relative overflow-hidden h-[200px] rounded-3xl">
+                            <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-transparent pointer-events-none" />
                             <CircularGauge score={finalScore} size={140} />
                             {uvAlert && (
                                 <div className="absolute bottom-2 left-0 right-0 text-center">
-                                    <span className="text-[10px] text-orange-400 font-bold uppercase animate-pulse">UV WARNING ACTIVE</span>
+                                    <span className="text-[10px] text-orange-500 font-bold uppercase animate-pulse">UV WARNING ACTIVE</span>
                                 </div>
                             )}
                         </div>
 
                         {/* ACTION CARD */}
-                        <div className="bg-card/40 backdrop-blur-md border border-white/5 rounded-3xl p-6 flex flex-col justify-between h-[200px]">
+                        <div className="glass-card p-6 flex flex-col justify-between h-[200px] rounded-3xl">
                             <div>
-                                <div className="text-sm text-neutral-400 mb-1">Total Estimated Cost</div>
-                                <div className="text-3xl font-bold text-white">$45.00</div>
+                                <div className="text-sm text-neutral-500 mb-1">Total Estimated Cost</div>
+                                <div className="text-3xl font-bold text-neutral-900">$45.00</div>
                             </div>
 
                             <div className="space-y-2">
@@ -453,7 +453,7 @@ function DashboardContent() {
                                     <button
                                         onClick={saving ? undefined : handleSave}
                                         disabled={saving}
-                                        className={cn("w-full py-3 bg-white hover:bg-neutral-200 text-black font-bold rounded-xl transition-all flex items-center justify-center gap-2 text-sm",
+                                        className={cn("w-full py-3 bg-neutral-900 hover:bg-neutral-800 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 text-sm shadow-lg shadow-neutral-900/10",
                                             saving && "opacity-50 cursor-wait"
                                         )}
                                     >
@@ -462,7 +462,7 @@ function DashboardContent() {
                                     </button>
                                 ) : (
                                     <SignInButton mode="modal">
-                                        <button className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all text-sm">
+                                        <button className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all text-sm shadow-lg shadow-blue-600/20">
                                             Sign In to Save
                                         </button>
                                     </SignInButton>
@@ -482,7 +482,7 @@ function DashboardContent() {
                                             if (data.url) window.location.href = data.url;
                                         } catch (e) { alert("Checkout Error"); }
                                     }}
-                                    className="w-full py-2 text-xs text-neutral-500 hover:text-white transition-colors uppercase tracking-wider font-medium"
+                                    className="w-full py-2 text-xs text-neutral-500 hover:text-neutral-900 transition-colors uppercase tracking-wider font-medium"
                                 >
                                     Purchase Premium Audit
                                 </button>
@@ -494,10 +494,10 @@ function DashboardContent() {
                 {/* RIGHT COLUMN: CONTROLS & CHRONO (50%) */}
                 <div className="flex flex-col gap-6 h-full overflow-hidden">
                     {/* INGREDIENT SELECTOR (Scrollable) */}
-                    <div className="flex-1 bg-card/60 backdrop-blur-xl border border-white/5 rounded-3xl p-6 flex flex-col min-h-0">
+                    <div className="flex-1 glass-card p-6 flex flex-col min-h-0 rounded-3xl">
                         <div className="flex items-center justify-between mb-4 shrink-0">
-                            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                                <FlaskConical className="w-5 h-5 text-blue-500" />
+                            <h3 className="text-lg font-semibold text-neutral-900 flex items-center gap-2">
+                                <FlaskConical className="w-5 h-5 text-blue-600" />
                                 Active Ingredients
                             </h3>
                             <div className="flex gap-2">
@@ -519,13 +519,13 @@ function DashboardContent() {
                                             className={cn(
                                                 "relative p-3 rounded-xl text-left transition-all duration-200 border group",
                                                 active
-                                                    ? "bg-blue-500/20 border-blue-500/50 text-blue-100"
-                                                    : "bg-white/5 border-white/5 text-neutral-400 hover:bg-white/10"
+                                                    ? "bg-blue-50 border-blue-200 text-blue-900 shadow-inner"
+                                                    : "bg-white border-neutral-100 text-neutral-500 hover:bg-neutral-50 hover:border-neutral-200 hover:shadow-sm"
                                             )}
                                         >
                                             <div className="flex items-start justify-between">
-                                                <span className="text-[10px] uppercase tracking-wider opacity-50">{ing.category}</span>
-                                                {active && <div className="w-1.5 h-1.5 bg-blue-400 rounded-full shadow-[0_0_5px_#60a5fa]" />}
+                                                <span className="text-[10px] uppercase tracking-wider opacity-60">{ing.category}</span>
+                                                {active && <div className="w-1.5 h-1.5 bg-blue-500 rounded-full shadow-[0_0_5px_rgba(59,130,246,0.5)]" />}
                                             </div>
                                             <div className="font-medium text-sm mt-1 truncate group-hover:whitespace-normal">{ing.name}</div>
                                         </button>
@@ -536,27 +536,27 @@ function DashboardContent() {
                     </div>
 
                     {/* NEW: 24-HOUR SEQUENCE CARD (CHRONO) */}
-                    <div className="shrink-0 bg-neutral-900/50 border border-white/5 rounded-3xl p-6 relative overflow-hidden group">
+                    <div className="shrink-0 glass-card p-6 relative overflow-hidden group rounded-3xl">
 
                         {/* Header */}
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                <History className="w-5 h-5 text-purple-400" />
+                            <h3 className="text-lg font-bold text-neutral-900 flex items-center gap-2">
+                                <History className="w-5 h-5 text-purple-500" />
                                 24-Hour Sequence
                             </h3>
                             {isPremium ? (
-                                <span className="text-[10px] bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full border border-purple-500/20">SYNC ACTIVE</span>
+                                <span className="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full border border-purple-200 font-medium">SYNC ACTIVE</span>
                             ) : (
-                                <Lock className="w-4 h-4 text-neutral-600" />
+                                <Lock className="w-4 h-4 text-neutral-400" />
                             )}
                         </div>
 
                         {/* Premium Lock Overlay */}
                         {!isPremium && (
-                            <div className="absolute inset-0 z-20 bg-black/60 backdrop-blur-sm flex items-center justify-center flex-col text-center p-6">
-                                <h4 className="text-white font-bold mb-1">Unlock Chrono-Sync</h4>
+                            <div className="absolute inset-0 z-20 bg-white/60 backdrop-blur-sm flex items-center justify-center flex-col text-center p-6">
+                                <h4 className="text-neutral-900 font-bold mb-1">Unlock Chrono-Sync</h4>
                                 <button
-                                    className="px-4 py-2 mt-2 bg-white text-black text-xs font-bold rounded-lg hover:bg-neutral-200 transition-colors"
+                                    className="px-4 py-2 mt-2 bg-neutral-900 text-white text-xs font-bold rounded-lg hover:bg-neutral-700 transition-colors shadow-lg"
                                     onClick={() => alert("Redirecting to checkout...")}
                                 >
                                     Upgrade Plan
@@ -568,11 +568,11 @@ function DashboardContent() {
                         <div className={cn("flex flex-col gap-4", !isPremium && "opacity-20 blur-sm")}>
                             {/* AM Track */}
                             <div className="flex items-center gap-4">
-                                <div className="w-8 text-xs font-bold text-orange-400 uppercase">AM</div>
-                                <div className="flex-1 h-12 bg-white/5 rounded-xl flex items-center px-2 gap-2 overflow-hidden relative">
-                                    <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-orange-500/0 via-orange-500/50 to-orange-500/0" />
+                                <div className="w-8 text-xs font-bold text-orange-500 uppercase">AM</div>
+                                <div className="flex-1 h-12 bg-neutral-50 border border-neutral-100 rounded-xl flex items-center px-2 gap-2 overflow-hidden relative">
+                                    <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-orange-400/0 via-orange-400/50 to-orange-400/0" />
                                     {runChronoSplit(selectedIngredients).am.map(id => (
-                                        <div key={id} className="h-8 px-3 bg-orange-500/20 rounded-lg flex items-center justify-center border border-orange-500/30 text-[10px] text-orange-200 whitespace-nowrap">
+                                        <div key={id} className="h-8 px-3 bg-orange-50 rounded-lg flex items-center justify-center border border-orange-200 text-[10px] text-orange-700 whitespace-nowrap shadow-sm">
                                             {getIngredientName(id)}
                                         </div>
                                     ))}
@@ -581,11 +581,11 @@ function DashboardContent() {
 
                             {/* PM Track */}
                             <div className="flex items-center gap-4">
-                                <div className="w-8 text-xs font-bold text-indigo-400 uppercase">PM</div>
-                                <div className="flex-1 h-12 bg-white/5 rounded-xl flex items-center px-2 gap-2 overflow-hidden relative">
-                                    <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-indigo-500/0 via-indigo-500/50 to-indigo-500/0" />
+                                <div className="w-8 text-xs font-bold text-indigo-500 uppercase">PM</div>
+                                <div className="flex-1 h-12 bg-neutral-50 border border-neutral-100 rounded-xl flex items-center px-2 gap-2 overflow-hidden relative">
+                                    <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-indigo-400/0 via-indigo-400/50 to-indigo-400/0" />
                                     {runChronoSplit(selectedIngredients).pm.map(id => (
-                                        <div key={id} className="h-8 px-3 bg-indigo-500/20 rounded-lg flex items-center justify-center border border-indigo-500/30 text-[10px] text-indigo-200 whitespace-nowrap">
+                                        <div key={id} className="h-8 px-3 bg-indigo-50 rounded-lg flex items-center justify-center border border-indigo-200 text-[10px] text-indigo-700 whitespace-nowrap shadow-sm">
                                             {getIngredientName(id)}
                                         </div>
                                     ))}
@@ -603,7 +603,7 @@ function DashboardContent() {
 
 export default function Dashboard() {
     return (
-        <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center text-white">Loading Bio-Audit...</div>}>
+        <Suspense fallback={<div className="min-h-screen bg-neutral-50 flex items-center justify-center text-neutral-900">Loading Bio-Audit...</div>}>
             <DashboardContent />
         </Suspense>
     );
