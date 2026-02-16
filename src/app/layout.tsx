@@ -59,7 +59,7 @@ export default function RootLayout({
 
   if (!clerkKey) {
     return (
-      <html lang="en" className="dark">
+      <html lang="en">
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}>
           {children}
         </body>
@@ -69,7 +69,7 @@ export default function RootLayout({
 
   return (
     <ClerkProvider>
-      <html lang="en" className="dark">
+      <html lang="en">
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
         >
